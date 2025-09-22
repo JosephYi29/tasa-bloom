@@ -5,7 +5,16 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
 	const res = NextResponse.next();
- const supabase = createMiddlewareClient({ req, res });
+	
+	console.log("------- Running Supabase middleware");
+	console.log(process.env.NEXT_PUBLIC_SUPABASE_URL);
+	console.log(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY);
+
+
+	const supabase = createMiddlewareClient({ req, res }, {
+		supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!,
+	});
 	const {
 		data: { session },
 	} = await supabase.auth.getSession();
