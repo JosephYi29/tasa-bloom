@@ -1,13 +1,12 @@
 // src/lib/utils.ts
 
 import { CurrentUser, UserData } from "@/types/app";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 
 const SUPER_ADMIN_EMAIL = "admin@yourclub.edu";
 
 export async function getCurrentUser(): Promise<CurrentUser> {
-	const supabase = createServerComponentClient({ cookies });
+	const supabase = await createClient();
 
 	const {
 		data: { user },
