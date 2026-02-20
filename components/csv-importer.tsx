@@ -13,6 +13,8 @@ type MappingTarget =
   | "last_name"
   | "full_name"
   | "email"
+  | "phone_number"
+  | "year"
   | "interview_link"
   | "question";
 
@@ -33,13 +35,15 @@ const TARGET_OPTIONS: { value: MappingTarget; label: string }[] = [
   { value: "last_name", label: "Last Name" },
   { value: "full_name", label: "Full Name (will split)" },
   { value: "email", label: "Email" },
+  { value: "phone_number", label: "Phone Number" },
+  { value: "year", label: "Year" },
   { value: "interview_link", label: "Interview Video Link" },
   { value: "question", label: "Application Question" },
 ];
 
 function guessMapping(header: string): MappingTarget {
   const h = header.toLowerCase().trim();
-  if (h.includes("number") || h === "#" || h === "no" || h === "no.")
+  if (h.includes("number") && !h.includes("phone") || h === "#" || h === "no" || h === "no.")
     return "candidate_number";
   if (h === "first name" || h === "first_name" || h === "firstname")
     return "first_name";
@@ -48,6 +52,8 @@ function guessMapping(header: string): MappingTarget {
   if (h === "name" || h === "full name" || h === "full_name")
     return "full_name";
   if (h.includes("email")) return "email";
+  if (h.includes("phone")) return "phone_number";
+  if (h === "year" || h.includes("grad year") || h === "class") return "year";
   if (h.includes("interview") || h.includes("video") || h.includes("drive link")) return "interview_link";
   if (h === "timestamp" || h === "date" || h === "submitted") return "skip";
   // Default: treat as an application question
@@ -123,6 +129,8 @@ export function CsvImporter({ cohortId, cohortLabel }: CsvImporterProps) {
       const lnIdx = mappings.findIndex((m) => m.target === "last_name");
       const fullIdx = mappings.findIndex((m) => m.target === "full_name");
       const emailIdx = mappings.findIndex((m) => m.target === "email");
+      const phoneIdx = mappings.findIndex((m) => m.target === "phone_number");
+      const yearIdx = mappings.findIndex((m) => m.target === "year");
       const interviewLinkIdx = mappings.findIndex((m) => m.target === "interview_link");
 
       // Get question columns
@@ -170,6 +178,8 @@ export function CsvImporter({ cohortId, cohortLabel }: CsvImporterProps) {
         const candidateNumber =
           numIdx >= 0 ? parseInt(row[numIdx], 10) || ri + 1 : ri + 1;
         const email = emailIdx >= 0 ? (row[emailIdx] ?? "").trim() || null : null;
+        const phoneNumber = phoneIdx >= 0 ? (row[phoneIdx] ?? "").trim() || null : null;
+        const year = yearIdx >= 0 ? (row[yearIdx] ?? "").trim() || null : null;
 
         const { data: candidate, error: candErr } = await supabase
           .from("candidates")
@@ -179,6 +189,8 @@ export function CsvImporter({ cohortId, cohortLabel }: CsvImporterProps) {
             first_name: firstName,
             last_name: lastName,
             email,
+            phone_number: phoneNumber,
+            year,
           })
           .select("id")
           .single();
