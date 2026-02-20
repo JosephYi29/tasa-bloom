@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { updateCohort } from "@/app/actions/cohorts";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -21,6 +21,10 @@ export function CohortList({ initialCohorts }: { initialCohorts: Cohort[] }) {
   const [cohorts, setCohorts] = useState<Cohort[]>(initialCohorts);
   const [loading, setLoading] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    setCohorts(initialCohorts);
+  }, [initialCohorts]);
 
   const toggleTarget = async (id: string, field: keyof Cohort, currentVal: boolean) => {
     setLoading(`${id}-${field}`);
