@@ -322,27 +322,27 @@ CSV Headers → Map → Create/reuse `application_question` records
 > **Admin UI** (`/admin/settings/weights`): Admins set the exact weights for each scoring category. Weights must sum to 1.0 — the UI validates this in real-time. These settings are persisted per cohort so historical results are reproducible.
 
 ### Step 5.1: Scoring Engine (Server-Side)
-- [ ] **Aggregation Logic** (Supabase SQL function or Next.js API route):
-  - Compute average score per candidate per category (application, interview, character)
-  - Pull weights from `cohort_settings` for the active cohort
-  - Weighted average: `composite = (app_avg × app_weight) + (interview_avg × int_weight) + (char_avg × char_weight)`
-  - Outlier removal: Flag/exclude scores that are > N standard deviations from the mean per question (N from `cohort_settings.outlier_std_devs`)
-  - Final composite score per candidate
+- [x] **Aggregation Logic** (Supabase SQL function or Next.js API route):
+  - [x] Compute average score per candidate per category (application, interview, character)
+  - [x] Pull weights from `cohort_settings` for the active cohort
+  - [x] Weighted average: `composite = (app_avg × app_weight) + (interview_avg × int_weight) + (char_avg × char_weight)`
+  - [x] Outlier removal: Flag/exclude scores that are > N standard deviations from the mean per question (N from `cohort_settings.outlier_std_devs`)
+  - [x] Final composite score per candidate
 
 ### Step 5.2: Admin — Results Dashboard
-- [ ] **Leaderboard View**: Ranked list of all candidates by composite score
-  - Show top N highlighted (N from `cohort_settings.top_n_display`)
-  - Columns: Rank, Name, App Avg, Interview Avg, Character Avg, Composite Score
-- [ ] **Candidate Detail View**: Drill down into a specific candidate's full score breakdown
-  - Per-question averages
-  - Per-voter breakdown (admin only)
-  - Outlier flags
-- [ ] **Statistical Summary**: Number of voters, response rate, score distributions
+- [x] **Leaderboard View**: Ranked list of all candidates by composite score
+  - [x] Show top N highlighted (N from `cohort_settings.top_n_display`)
+  - [x] Columns: Rank, Name, App Avg, Interview Avg, Character Avg, Composite Score
+- [x] **Candidate Detail View**: Drill down into a specific candidate's full score breakdown
+  - [x] Per-question averages
+  - [x] Per-voter breakdown (admin only)
+  - [x] Outlier flags
+- [x] **Statistical Summary**: Number of voters, response rate, score distributions
 
 ### Step 5.3: Export & Historical Logging
-- [ ] **CSV Export**: Export full results table as CSV for archival
-- [ ] **Per-Cohort Archives**: Previous cohort results remain viewable (read-only) when a new cohort is activated
-- [ ] All data persists in Supabase — no manual spreadsheet management needed
+- [x] **CSV Export**: Export full results table as CSV for archival
+- [x] **Per-Cohort Archives**: Previous cohort results remain viewable (read-only) when a new cohort is activated
+- [x] All data persists in Supabase — no manual spreadsheet management needed
 
 ---
 
@@ -475,11 +475,12 @@ CSV Headers → Map → Create/reuse `application_question` records
 - Verify CSV export matches expected format for archival
 - Test cohort switching: deactivate old cohort, activate new one → verify roles update
 
-### Completed Local Testing (Phases 1-4 + UI Enhancements)
+### Completed Local Testing (Phases 1-6 + UI Enhancements)
 - **Phase 1-2**: Authentication, Admin Role parsing, and Database Schema verified manually.
 - **Phase 2.3**: CSV Candidate Importer successfully tested parsing & data mapping.
 - **Phase 3**: End-to-end Voting System tested (Application, Interview, Character ratings workflows) and database state verified.
 - **Phase 4**: Admin Settings & Phase Locks (Voting toggles, Cohort switching, Board Member assignment) verified.
+- **Phase 5**: Admin Scoring Details, DB Aggregation math algorithms tested manually, CSV blob-exporting works, and custom Candidate display Ordering (via drag-and-drop `@dnd-kit`) built out successfully.
 - **Phase 6**: Per-user Personal Theme Settings (Light/Dark, custom Accent Colors, and Base Backgrounds) verified.
 
 ---
@@ -491,3 +492,4 @@ CSV Headers → Map → Create/reuse `application_question` records
 3. **Score Visibility**: Board members can only see their own submitted ratings. Admins see everything. This is enforced at the database level via RLS.
 4. **Cohort Lifecycle**: Only one cohort is `is_active = true` at a time. Historical cohorts and their data remain in the DB for archival.
 5. **Character Evaluation Timing**: The character eval is typically done during an in-person meeting. The admin can lock/unlock this phase to control when board members can submit character scores.
+6. **Candidate Ordering**: Admins have manual control over how they are displayed to voters during evaluated using the draggable grid logic (`custom_order`).
