@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createCohort } from "@/app/actions/cohorts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,22 +30,13 @@ export function CreateCohortDialog() {
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from("cohorts")
-        .insert({
-          term,
-          year: parseInt(year, 10),
-          is_active: false, // Don't auto-activate, let the admin do it manually
-        });
-
-      if (error) throw error;
+      await createCohort(term, parseInt(year, 10));
       
       setOpen(false);
       router.refresh();

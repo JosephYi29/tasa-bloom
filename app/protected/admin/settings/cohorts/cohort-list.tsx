@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { updateCohort } from "@/app/actions/cohorts";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -21,17 +21,11 @@ export function CohortList({ initialCohorts }: { initialCohorts: Cohort[] }) {
   const [cohorts, setCohorts] = useState<Cohort[]>(initialCohorts);
   const [loading, setLoading] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
 
   const toggleTarget = async (id: string, field: keyof Cohort, currentVal: boolean) => {
     setLoading(`${id}-${field}`);
     try {
-      const { error } = await supabase
-        .from("cohorts")
-        .update({ [field]: !currentVal })
-        .eq("id", id);
-
-      if (error) throw error;
+      await updateCohort(id, field, !currentVal);
 
       // Optimistically update local state.
       // If setting is_active = true, we must set all others to false locally too

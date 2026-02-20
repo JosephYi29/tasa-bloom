@@ -43,7 +43,7 @@ export function AppSidebar({ isAdmin, userName, position }: AppSidebarProps) {
 
   const renderLink = (link: (typeof memberLinks)[0]) => {
     const isActive =
-      link.href === "/protected"
+      link.href === "/protected" || link.href === "/protected/admin"
         ? pathname === link.href
         : pathname.startsWith(link.href);
     return (
