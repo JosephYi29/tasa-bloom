@@ -25,9 +25,9 @@ Now, test importing a Google Form export.
 
 1. Create a dummy CSV file on your computer (or export a real one from Google Sheets). Example format:
    ```csv
-   Timestamp,Full Name,Email,Why do you want to join TASA?,Interview Video Link
-   1/1/2026,Jane Doe,jane@doe.com,"I love the culture!",https://drive.google.com/file/d/1234abc/view
-   1/2/2026,John Smith,john@smith.com,"I want to help plan Night Market.",https://drive.google.com/file/d/5678xyz/view
+   Timestamp,First Name,Last Name,Personal Email,Phone Number,Year,Why do you want to join TASA?,Interview Video Link
+   1/1/2026,Jane,Doe,jane@doe.com,123-456-7890,2026,"I love the culture!",https://drive.google.com/file/d/1234abc/view
+   1/2/2026,John,Smith,john@smith.com,098-765-4321,2025,"I want to help plan Night Market.",https://drive.google.com/file/d/5678xyz/view
    ```
 2. In the app, click **Import Data** on the Admin sidebar.
 3. Drag and drop your CSV file.

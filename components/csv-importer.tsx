@@ -60,6 +60,16 @@ function guessMapping(header: string): MappingTarget {
   return "question";
 }
 
+function cleanName(name: string): string {
+  if (!name) return "";
+  return name
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function CsvImporter({ cohortId, cohortLabel }: CsvImporterProps) {
   const [step, setStep] = useState<"upload" | "map" | "preview" | "done">(
     "upload"
@@ -172,6 +182,9 @@ export function CsvImporter({ cohortId, cohortLabel }: CsvImporterProps) {
         }
         if (fnIdx >= 0) firstName = (row[fnIdx] ?? "").trim();
         if (lnIdx >= 0) lastName = (row[lnIdx] ?? "").trim();
+
+        firstName = cleanName(firstName);
+        lastName = cleanName(lastName);
 
         if (!firstName && !lastName) continue;
 
