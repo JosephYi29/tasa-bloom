@@ -16,15 +16,20 @@ export default async function AdminCohortsPage() {
 
   const supabase = await createClient();
 
-  const { data: cohorts, error } = await supabase
+  const { data: rawCohorts, error } = await supabase
     .from("cohorts")
-    .select("*")
+    .select("*, candidates(count)")
     .order("year", { ascending: false })
     .order("term", { ascending: false });
 
   if (error) {
     console.error("Failed to fetch cohorts:", error);
   }
+
+  const cohorts = (rawCohorts || []).map((c: any) => ({
+    ...c,
+    candidate_count: c.candidates?.[0]?.count ?? 0,
+  }));
 
   return (
     <div className="space-y-6">

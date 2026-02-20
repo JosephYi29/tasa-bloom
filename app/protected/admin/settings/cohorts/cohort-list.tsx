@@ -26,6 +26,7 @@ interface Cohort {
   app_voting_open: boolean;
   int_voting_open: boolean;
   char_voting_open: boolean;
+  candidate_count: number;
 }
 
 export function CohortList({ initialCohorts, isSuperAdmin = false }: { initialCohorts: Cohort[], isSuperAdmin?: boolean }) {
@@ -86,6 +87,10 @@ export function CohortList({ initialCohorts, isSuperAdmin = false }: { initialCo
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-sm text-muted-foreground">
                   ID: {cohort.id.split('-')[0]}...
+                </p>
+                <span className="text-sm text-muted-foreground">•</span>
+                <p className="text-sm font-medium text-foreground">
+                  {cohort.candidate_count} candidates
                 </p>
                 {isSuperAdmin && (
                   <DeleteCohortDialog cohort={cohort} />
