@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
 import { revalidatePath } from "next/cache";
 
@@ -86,7 +86,7 @@ export async function importCandidates(
   const user = await getCurrentUser();
   if (!user?.isAdmin) throw new Error("Unauthorized");
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   // 1. Create Application Questions
   const questionIds: Record<number, string> = {};
