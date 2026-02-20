@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, AlertTriangle } from "lucide-react";
-import { defaultWeights } from "../../settings/weights/actions";
+import { defaultWeights } from "@/lib/constants";
 
 export const metadata = {
   title: "Admin | Candidate Details",
@@ -18,12 +18,12 @@ function getStats(scores: number[]) {
   return { mean: m, stdev: s };
 }
 
-export default async function CandidateDetailsPage({ params }: { params: { id: string } }) {
+export default async function CandidateDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user?.isAdmin) redirect("/protected");
 
   const supabase = await createAdminClient();
-  const candidateId = params.id;
+  const candidateId = (await params).id;
 
   // 1. Fetch Candidate info
   const { data: candidate, error: candError } = await supabase
@@ -41,7 +41,7 @@ export default async function CandidateDetailsPage({ params }: { params: { id: s
   }
 
   // 2. Fetch Settings for Outlier Threshold
-  let { data: settings } = await supabase
+  const { data: settings } = await supabase
     .from("cohort_settings")
     .select("outlier_std_devs")
     .eq("cohort_id", candidate.cohort_id)
@@ -52,7 +52,7 @@ export default async function CandidateDetailsPage({ params }: { params: { id: s
   // 3. Fetch Ratings with Scores
   const { data: rawRatings } = await supabase
     .from("ratings")
-    .select(\`
+    .select(`
       id,
       rating_type,
       voter_id,
@@ -65,13 +65,15 @@ export default async function CandidateDetailsPage({ params }: { params: { id: s
           question_text
         )
       )
-    \`)
+    `)
     .eq("candidate_id", candidateId);
 
   // 4. Process scores per question/trait
   const scoresByItem: Record<string, { type: string, text: string, scores: number[], comments: string[] }> = {};
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawRatings?.forEach((rating: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rating.rating_scores.forEach((rs: any) => {
       const key = rs.question_id || rs.trait_name || "unknown";
       if (!scoresByItem[key]) {
@@ -165,7 +167,7 @@ export default async function CandidateDetailsPage({ params }: { params: { id: s
                           <ul className="space-y-1.5">
                             {item.comments.map((comment, i) => (
                               <li key={i} className="text-sm bg-muted/40 p-2 rounded-md border text-foreground/80 italic">
-                                "{comment}"
+                                &quot;{comment}&quot;
                               </li>
                             ))}
                           </ul>

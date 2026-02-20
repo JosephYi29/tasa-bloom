@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { WeightsForm } from "./weights-form";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { defaultWeights } from "./actions";
+import { defaultWeights } from "@/lib/constants";
 
 export const metadata = {
   title: "Admin Settings | Scoring Weights",

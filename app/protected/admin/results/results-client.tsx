@@ -53,14 +53,14 @@ export function ResultsClient({
 
     const csvContent = [
       headers.join(","),
-      ...rows.map(row => row.map(cell => \`"\${cell}"\`).join(","))
-    ].join("\\n");
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", \`\${activeCohort.term}_\${activeCohort.year}_Results.csv\`);
+    link.setAttribute("download", `${activeCohort.term}_${activeCohort.year}_Results.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -107,6 +107,7 @@ export function ResultsClient({
             ) : (
               filteredData.map((candidate, index) => {
                 const isTopN = index < topN && candidate.composite_score !== null;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const pendingScores = candidate.composite_score === null;
                 const hasOutliers = candidate.application.outliers.length > 0 || 
                                     candidate.interview.outliers.length > 0 || 
@@ -123,7 +124,7 @@ export function ResultsClient({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Link 
-                          href={\`/protected/admin/results/\${candidate.candidate_id}\`}
+                          href={`/protected/admin/results/${candidate.candidate_id}`}
                           className="font-medium hover:underline text-primary"
                         >
                           {candidate.first_name} {candidate.last_name}

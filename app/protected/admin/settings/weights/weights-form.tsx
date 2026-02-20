@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function WeightsForm({ initialSettings, activeCohortId }: { initialSettings: any, activeCohortId: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -107,7 +108,7 @@ export function WeightsForm({ initialSettings, activeCohortId }: { initialSettin
               <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                 <div 
                   className={`h-full transition-all ${isSumValid ? "bg-green-500" : totalSum > 1.0 ? "bg-red-500" : "bg-yellow-500"}`}
-                  style={{ width: \`\${Math.min(totalSum * 100, 100)}%\` }}
+                  style={{ width: `${Math.min(totalSum * 100, 100)}%` }}
                 />
               </div>
             </div>

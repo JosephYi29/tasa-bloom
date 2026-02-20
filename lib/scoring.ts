@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { defaultWeights } from "@/app/protected/admin/settings/weights/actions"; // fallback
+import { defaultWeights } from "@/lib/constants"; // fallback
 
 export type CandidateScoreCategory = {
   average: number | null;
@@ -83,6 +83,7 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
   });
 
   rawRatings.forEach(rating => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const scores = rating.rating_scores.map((rs: any) => rs.score) as number[];
     if (rating.candidate_id && scoreMap[rating.candidate_id]) {
         // add all individual question scores from this voter to the pool

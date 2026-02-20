@@ -35,6 +35,7 @@ type CandidateType = {
 };
 
 // Sub-component for individual sortable row
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function SortableCandidateRow({ candidate, index }: { candidate: CandidateType; index: number }) {
   const {
     attributes,
@@ -174,7 +175,7 @@ export function CandidatesClient({
         toast.success("Candidate display order saved!");
         setHasChanges(false);
       }
-    } catch (err) {
+    } catch {
       toast.error("An unexpected error occurred.");
     } finally {
       setIsSaving(false);
