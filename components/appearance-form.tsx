@@ -2,8 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useColorTheme } from "./color-theme-provider";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
+
 import { Monitor, Moon, Sun, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -89,7 +88,7 @@ export function AppearanceForm() {
           {baseThemes.map((b) => (
             <button
               key={b.value}
-              onClick={() => setBaseTheme(b.value as any)}
+              onClick={() => setBaseTheme(b.value as Parameters<typeof setBaseTheme>[0])}
               className={cn(
                 "group flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:bg-accent",
                 baseTheme === b.value ? "border-primary bg-accent/50" : "border-transparent"
@@ -117,7 +116,7 @@ export function AppearanceForm() {
           {colorThemes.map((c) => (
             <button
               key={c.value}
-              onClick={() => setColorTheme(c.value as any)}
+              onClick={() => setColorTheme(c.value as Parameters<typeof setColorTheme>[0])}
               className={cn(
                 "group flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:bg-accent",
                 colorTheme === c.value ? "border-primary bg-accent/50" : "border-transparent"

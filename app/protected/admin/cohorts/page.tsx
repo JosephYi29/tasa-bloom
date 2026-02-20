@@ -26,6 +26,7 @@ export default async function AdminCohortsPage() {
     console.error("Failed to fetch cohorts:", error);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cohorts = (rawCohorts || []).map((c: any) => ({
     ...c,
     candidate_count: c.candidates?.[0]?.count ?? 0,

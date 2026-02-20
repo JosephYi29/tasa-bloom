@@ -54,8 +54,8 @@ export default async function AdminBoardPage() {
       userId: m.user_id,
       name: profile ? `${profile.first_name} ${profile.last_name}` : "Unknown User",
       positionId: m.position_id,
-      positionName: (m.board_positions as any)?.name || "Unknown",
-      isAdmin: (m.board_positions as any)?.is_admin || false,
+      positionName: (m.board_positions as { name?: string })?.name || "Unknown",
+      isAdmin: (m.board_positions as { is_admin?: boolean })?.is_admin || false,
     };
   }) || [];
 

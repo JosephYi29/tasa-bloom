@@ -44,8 +44,8 @@ export function CreateCohortDialog() {
       // Reset form
       setTerm("Fall");
       setYear(new Date().getFullYear().toString());
-    } catch (err: any) {
-      alert(`Error creating cohort: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Error creating cohort: ${(err as Error).message}`);
     } finally {
       setLoading(false);
     }

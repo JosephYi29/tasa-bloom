@@ -35,7 +35,7 @@ export default async function CandidateInterviewPage({
 
   if (!candidate) notFound();
   
-  const isVotingOpen = (candidate.cohorts as any)?.int_voting_open ?? false;
+  const isVotingOpen = (candidate.cohorts as { int_voting_open?: boolean })?.int_voting_open ?? false;
 
   // 1b. Get Prev/Next candidate IDs for navigation
   const [{ data: prevCandidate }, { data: nextCandidate }] = await Promise.all([

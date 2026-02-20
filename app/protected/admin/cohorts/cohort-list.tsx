@@ -60,8 +60,8 @@ export function CohortList({ initialCohorts, isSuperAdmin = false }: { initialCo
       );
       
       router.refresh();
-    } catch (err: any) {
-      alert(`Failed to update settings: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to update settings: ${(err as Error).message}`);
     } finally {
       setLoading(null);
     }
@@ -186,8 +186,8 @@ function DeleteCohortDialog({ cohort }: { cohort: Cohort }) {
       await deleteCohort(cohort.id);
       setOpen(false);
       router.refresh();
-    } catch (err: any) {
-      alert(`Error deleting cohort: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Error deleting cohort: ${(err as Error).message}`);
     } finally {
       setLoading(false);
       setConfirmText("");

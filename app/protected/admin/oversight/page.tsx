@@ -64,7 +64,7 @@ export default async function AdminOversightPage() {
   const progressData = boardMembers?.map((member) => {
     const profile = profiles?.find((p) => p.user_id === member.user_id);
     const name = profile ? `${profile.first_name} ${profile.last_name}` : "Unknown User";
-    const position = (member.board_positions as any)?.name || "Member";
+    const position = (member.board_positions as { name?: string })?.name || "Member";
 
     const userRatings = ratings?.filter((r) => r.voter_id === member.user_id) || [];
     

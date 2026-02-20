@@ -66,8 +66,8 @@ export function BoardList({
       setOpen(false);
       setSelectedProfile("");
       setSelectedPosition("");
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Error: ${(err as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -79,8 +79,8 @@ export function BoardList({
     setRemoveLoading(userId);
     try {
       await removeBoardMember(userId);
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Error: ${(err as Error).message}`);
     } finally {
       setRemoveLoading(null);
     }

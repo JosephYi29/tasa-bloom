@@ -34,7 +34,7 @@ export default async function CandidateCharacterPage({
 
   if (!candidate) notFound();
   
-  const isVotingOpen = (candidate.cohorts as any)?.char_voting_open ?? false;
+  const isVotingOpen = (candidate.cohorts as { char_voting_open?: boolean })?.char_voting_open ?? false;
 
   // 1b. Get Prev/Next candidate IDs for navigation
   const [{ data: prevCandidate }, { data: nextCandidate }] = await Promise.all([
