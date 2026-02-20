@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Papa from "papaparse";
-import { createClient } from "@/lib/supabase/client";
+import { importCandidates } from "@/app/actions/cohorts";
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet, Check, AlertCircle } from "lucide-react";
 
@@ -131,132 +131,28 @@ export function CsvImporter({ cohortId, cohortLabel }: CsvImporterProps) {
     setResult(null);
 
     try {
-      const supabase = createClient();
-
       // Determine column indices
-      const numIdx = mappings.findIndex((m) => m.target === "candidate_number");
-      const fnIdx = mappings.findIndex((m) => m.target === "first_name");
-      const lnIdx = mappings.findIndex((m) => m.target === "last_name");
-      const fullIdx = mappings.findIndex((m) => m.target === "full_name");
-      const emailIdx = mappings.findIndex((m) => m.target === "email");
-      const phoneIdx = mappings.findIndex((m) => m.target === "phone_number");
-      const yearIdx = mappings.findIndex((m) => m.target === "year");
-      const interviewLinkIdx = mappings.findIndex((m) => m.target === "interview_link");
+      const columnIndices = {
+        numIdx: mappings.findIndex((m) => m.target === "candidate_number"),
+        fnIdx: mappings.findIndex((m) => m.target === "first_name"),
+        lnIdx: mappings.findIndex((m) => m.target === "last_name"),
+        fullIdx: mappings.findIndex((m) => m.target === "full_name"),
+        emailIdx: mappings.findIndex((m) => m.target === "email"),
+        phoneIdx: mappings.findIndex((m) => m.target === "phone_number"),
+        yearIdx: mappings.findIndex((m) => m.target === "year"),
+        interviewLinkIdx: mappings.findIndex((m) => m.target === "interview_link"),
+      };
 
       // Get question columns
       const questionCols = mappings
-        .map((m, i) => ({ ...m, colIndex: i }))
-        .filter((m) => m.target === "question");
+        .map((m, i) => ({ header: m.header, colIndex: i }))
+        .filter((_, i) => mappings[i].target === "question");
 
-      // Create application questions first
-      const questionIds: Record<number, string> = {};
-      for (let qi = 0; qi < questionCols.length; qi++) {
-        const q = questionCols[qi];
-        const { data, error } = await supabase
-          .from("application_questions")
-          .insert({
-            cohort_id: cohortId,
-            question_text: q.header,
-            question_order: qi + 1,
-            category: "application",
-          })
-          .select("id")
-          .single();
-
-        if (error) throw new Error(`Failed to create question: ${error.message}`);
-        if (data) questionIds[q.colIndex] = data.id;
-      }
-
-      // Import each row as a candidate + responses
-      let imported = 0;
-      for (let ri = 0; ri < rows.length; ri++) {
-        const row = rows[ri];
-
-        let firstName = "";
-        let lastName = "";
-
-        if (fullIdx >= 0) {
-          const parts = (row[fullIdx] ?? "").trim().split(/\s+/);
-          firstName = parts[0] ?? "";
-          lastName = parts.slice(1).join(" ") || "";
-        }
-        if (fnIdx >= 0) firstName = (row[fnIdx] ?? "").trim();
-        if (lnIdx >= 0) lastName = (row[lnIdx] ?? "").trim();
-
-        firstName = cleanName(firstName);
-        lastName = cleanName(lastName);
-
-        if (!firstName && !lastName) continue;
-
-        const candidateNumber =
-          numIdx >= 0 ? parseInt(row[numIdx], 10) || ri + 1 : ri + 1;
-        const email = emailIdx >= 0 ? (row[emailIdx] ?? "").trim() || null : null;
-        const phoneNumber = phoneIdx >= 0 ? (row[phoneIdx] ?? "").trim() || null : null;
-        const year = yearIdx >= 0 ? (row[yearIdx] ?? "").trim() || null : null;
-
-        const { data: candidate, error: candErr } = await supabase
-          .from("candidates")
-          .insert({
-            cohort_id: cohortId,
-            candidate_number: candidateNumber,
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            phone_number: phoneNumber,
-            year,
-          })
-          .select("id")
-          .single();
-
-        if (candErr)
-          throw new Error(
-            `Failed to insert candidate row ${ri + 1}: ${candErr.message}`
-          );
-
-        if (candidate) {
-          // Insert responses
-          const responses = questionCols
-            .filter((q) => questionIds[q.colIndex])
-            .map((q) => ({
-              candidate_id: candidate.id,
-              question_id: questionIds[q.colIndex],
-              response_text: (row[q.colIndex] ?? "").trim() || null,
-            }));
-
-          if (responses.length > 0) {
-            const { error: respErr } = await supabase
-              .from("application_responses")
-              .insert(responses);
-            if (respErr)
-              throw new Error(
-                `Failed to insert responses for row ${ri + 1}: ${respErr.message}`
-              );
-          }
-
-          // Insert interview link if mapped
-          if (interviewLinkIdx >= 0) {
-            const videoUrl = (row[interviewLinkIdx] ?? "").trim();
-            if (videoUrl) {
-              const { error: intErr } = await supabase
-                .from("interview_links")
-                .insert({
-                  candidate_id: candidate.id,
-                  video_url: videoUrl,
-                });
-              if (intErr)
-                throw new Error(
-                  `Failed to insert interview link for row ${ri + 1}: ${intErr.message}`
-                );
-            }
-          }
-        }
-
-        imported++;
-      }
+      const res = await importCandidates(cohortId, questionCols, rows, columnIndices);
 
       setResult({
         success: true,
-        message: `Imported ${imported} candidates with ${questionCols.length} questions each.`,
+        message: `Imported ${res.imported} candidates with ${res.questions} questions each.`,
       });
       setStep("done");
     } catch (err: unknown) {
@@ -404,11 +300,11 @@ export function CsvImporter({ cohortId, cohortLabel }: CsvImporterProps) {
             <tbody>
               {previewRows.map((row, ri) => {
                 let name = "";
-                if (fullIdx >= 0) name = row[fullIdx] ?? "";
+                if (fullIdx >= 0) name = cleanName(row[fullIdx] ?? "");
                 else {
                   const fn = fnIdx >= 0 ? row[fnIdx] ?? "" : "";
                   const ln = lnIdx >= 0 ? row[lnIdx] ?? "" : "";
-                  name = `${fn} ${ln}`.trim();
+                  name = cleanName(`${fn} ${ln}`);
                 }
                 const num =
                   numIdx >= 0 ? parseInt(row[numIdx], 10) || ri + 1 : ri + 1;
