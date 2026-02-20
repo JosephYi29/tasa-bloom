@@ -112,6 +112,39 @@ export type Database = {
         }
         Relationships: []
       }
+      candidates: {
+        Row: {
+          candidate_number: number | null
+          cohort_id: string
+          created_at: string
+          custom_order: number | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+        }
+        Insert: {
+          candidate_number?: number | null
+          cohort_id: string
+          created_at?: string
+          custom_order?: number | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+        }
+        Update: {
+          candidate_number?: number | null
+          cohort_id?: string
+          created_at?: string
+          custom_order?: number | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           first_name: string | null

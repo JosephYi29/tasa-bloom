@@ -76,3 +76,28 @@ Let's verify the admin oversight and cohort management tools.
 9. **Oversight Dashboard:** Click **Oversight** in the Admin sidebar.
    * You should see progress bars for every board member in the active cohort.
    * If you submitted scores in Step 4, your progress bar should reflect the number of candidates you've rated versus the total number of candidates in the active cohort.
+
+## 7. Test Scoring & Results Analytics (Phase 5)
+Now, let's verify the automatic scoring engine and export features.
+
+1. As an admin, click **Settings** in the Admin sidebar.
+2. Under Settings, select the **Scoring Weights** card.
+3. Test out the validation format by making the numbers sum to anything other than 100%, and notice that saving is disabled or presents an error.
+4. Set the weights to **Application (40%)**, **Interview (35%)**, and **Character (25%)** or to your desired levels and hit **Save Settings**.
+5. Set your **Outlier Threshold** (default is 2.0). 
+6. Navigate to the **Results** tab in the Admin sidebar. 
+7. Here you will see the full ranked list of candidates by their **Composite Score**. You can view how they scored via their categorized averages.
+8. Click into any Candidate's name to view their **Candidate Details**. Look at the breakdowns for Application, Interview, and Character ratings. Notice how standard deviations inform the Adjusted Average to avoid extreme feedback outliers!
+9. Back in the Results page, hit the **Export CSV** to safely download the results locally onto your computer in the `.csv` format.
+
+## 8. Test Candidate Ordering (Feature)
+As an admin, you have full control over how Candidates are presented to voters on the Voting Hub.
+
+1. As an admin, click **Candidates** in the Admin sidebar.
+2. Assuming you have Candidates loaded in the active cohort, note their current order.
+3. Click the **Alphabetical** button to sort them by first name.
+4. Click the **Randomize** button to shuffle the candidates wildly.
+5. In addition to the auto-sorters, you can **Drag and Drop** any candidate row up and down the table using their left-side grip handle!
+6. Click **Save Order**.
+7. In the sidebar, click the main **Vote** link to head to the Voting Hub.
+8. Notice that the candidate order now perfectly matches the custom configuration you just saved!
