@@ -80,7 +80,7 @@ export default async function AdminBoardPage() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">Board Members</h2>

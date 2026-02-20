@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import { CohortList } from "./cohort-list";
@@ -14,7 +14,7 @@ export default async function AdminCohortsPage() {
 
   const isSuperAdmin = user.email === process.env.SUPER_ADMIN_EMAIL;
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   const { data: rawCohorts, error } = await supabase
     .from("cohorts")
@@ -32,7 +32,7 @@ export default async function AdminCohortsPage() {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">Cohorts</h2>

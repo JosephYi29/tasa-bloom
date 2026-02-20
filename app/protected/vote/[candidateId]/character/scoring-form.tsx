@@ -19,7 +19,7 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
   const [result, setResult] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   const handleScoreChange = (tId: string, val: string) => {
-    const num = parseInt(val, 10);
+    const num = parseFloat(val);
     if (!isNaN(num)) {
       setScores(prev => ({ ...prev, [tId]: Math.min(Math.max(num, 1), 10) }));
     } else if (val === "") {
@@ -76,6 +76,7 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
                 type="number"
                 min={1}
                 max={10}
+                step="0.01"
                 required
                 value={scores[t.id] || ""}
                 onChange={(e) => handleScoreChange(t.id, e.target.value)}

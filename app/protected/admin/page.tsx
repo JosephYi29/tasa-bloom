@@ -1,10 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/authUtils";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Users, Upload, Settings } from "lucide-react";
 
 export default async function AdminOverviewPage() {
-  const supabase = await createClient();
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) redirect("/protected");
+
+  const supabase = await createAdminClient();
 
   // Get active cohort
   const { data: activeCohort } = await supabase

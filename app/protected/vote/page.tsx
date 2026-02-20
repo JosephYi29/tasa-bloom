@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,12 @@ export default async function VoteHubPage() {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  const supabase = await createClient();
+  const isSuperAdmin = user.email === process.env.SUPER_ADMIN_EMAIL;
+  const supabase = isSuperAdmin ? await createAdminClient() : await createClient();
 
   const { data: activeCohort } = await supabase
     .from("cohorts")
-    .select("id, term, year")
+    .select("id, term, year, app_voting_open")
     .eq("is_active", true)
     .single();
 
@@ -66,7 +67,7 @@ export default async function VoteHubPage() {
           No candidates have been imported for this cohort yet.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
           {candidates.map((c) => {
             const hasApp = getStatusIndicator(c.ratings || [], "application");
             const hasInt = getStatusIndicator(c.ratings || [], "interview");
@@ -84,7 +85,11 @@ export default async function VoteHubPage() {
                     </span>
                   </div>
                   <h3 className="text-lg font-bold">
-                    {c.first_name} {c.last_name}
+                    {activeCohort.app_voting_open ? (
+                      <span className="text-muted-foreground italic text-sm">Hidden (App Eval)</span>
+                    ) : (
+                      `${c.first_name} ${c.last_name}`
+                    )}
                   </h3>
                 </div>
 
@@ -103,14 +108,14 @@ export default async function VoteHubPage() {
                   </div>
                 </div>
 
-                <div className="mt-auto grid grid-cols-3 gap-2">
-                  <Button asChild variant="secondary" size="sm" className="w-full">
+                <div className="mt-auto grid grid-cols-3 gap-1.5">
+                  <Button asChild variant="secondary" className="w-full h-8 px-1 text-xs">
                     <Link href={`/protected/vote/${c.id}/application`}>App</Link>
                   </Button>
-                  <Button asChild variant="secondary" size="sm" className="w-full">
+                  <Button asChild variant="secondary" className="w-full h-8 px-1 text-xs">
                     <Link href={`/protected/vote/${c.id}/interview`}>Interview</Link>
                   </Button>
-                  <Button asChild variant="secondary" size="sm" className="w-full">
+                  <Button asChild variant="secondary" className="w-full h-8 px-1 text-xs">
                     <Link href={`/protected/vote/${c.id}/character`}>Character</Link>
                   </Button>
                 </div>

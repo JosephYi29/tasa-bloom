@@ -180,7 +180,8 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] **Import page** (`/protected/admin/import`): CSV upload + column mapping + preview + import (`components/csv-importer.tsx`)
 - [x] Admin route protection (`/protected/admin/layout.tsx` — redirects non-admins)
 - [x] Admin overview page with quick action cards
-- [ ] Manual add/edit/delete individual candidates
+- [ ] **Candidate Detail View** (`/protected/admin/candidates/[id]`): Shows full profile, responses, and interview video.
+- [ ] Manual add/edit/delete individual candidates (Include a Delete action on the candidate list table)
 - [ ] Upload/link interview recordings per candidate
 - [ ] Manage application questions per cohort (add, edit, reorder, delete)
 
@@ -246,6 +247,7 @@ CSV Headers → Map → Create/reuse `application_question` records
   - Optional comment box per question
   - Save as draft / Submit final rating
   - Visual indicator showing which candidates the voter has already rated
+  - **CRITICAL**: Application rating must be completely anonymous. The candidate's name and identifying details should be hidden from the voter during this phase.
 
 ### Step 3.5: Voting UI — Interview Rating
 - [ ] **Interview Rating View** (`/vote/[candidateId]/interview`):
@@ -260,7 +262,7 @@ CSV Headers → Map → Create/reuse `application_question` records
   - Score input (1–10) per trait
   - Optional comment per trait
   - Save / Submit
-  - Note: This step typically happens *after* the group discussion, so it could be locked/unlocked by admin
+  - Note: This phase will *always* occur AFTER the Interview and Application phases, typically during an in-person group discussion. Admins will lock this phase until the earlier phases are complete.
 
 ### Step 3.7: Voting Progress Tracker
 - [ ] Dashboard showing the voter's progress: which candidates have been rated, which are pending
@@ -371,6 +373,9 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [ ] Custom domain setup (optional)
 - [ ] Seed production DB: Create first "Spring 2026" cohort, seed board positions, invite initial admin users
 
+### Step 6.5: Backlog / Future Enhancements
+- [ ] **Global Settings Page (`/protected/admin/settings`)**: A dedicated page for managing global configurations such as scoring weights, default character traits, notification settings, and other app-wide parameters that don't belong strictly to a single cohort.
+
 ---
 
 ## 📐 Database Schema Summary (All Phases)
@@ -469,6 +474,13 @@ CSV Headers → Map → Create/reuse `application_question` records
 - Deploy to Vercel preview → invite 2–3 board members to test the full voting flow
 - Verify CSV export matches expected format for archival
 - Test cohort switching: deactivate old cohort, activate new one → verify roles update
+
+### Completed Local Testing (Phases 1-4 + UI Enhancements)
+- **Phase 1-2**: Authentication, Admin Role parsing, and Database Schema verified manually.
+- **Phase 2.3**: CSV Candidate Importer successfully tested parsing & data mapping.
+- **Phase 3**: End-to-end Voting System tested (Application, Interview, Character ratings workflows) and database state verified.
+- **Phase 4**: Admin Settings & Phase Locks (Voting toggles, Cohort switching, Board Member assignment) verified.
+- **Phase 6**: Per-user Personal Theme Settings (Light/Dark, custom Accent Colors, and Base Backgrounds) verified.
 
 ---
 

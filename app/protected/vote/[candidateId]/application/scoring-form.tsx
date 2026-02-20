@@ -19,7 +19,7 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
   const [result, setResult] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   const handleScoreChange = (qId: string, val: string) => {
-    const num = parseInt(val, 10);
+    const num = parseFloat(val);
     if (!isNaN(num)) {
       setScores(prev => ({ ...prev, [qId]: Math.min(Math.max(num, 1), 10) }));
     } else if (val === "") {
@@ -74,6 +74,7 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
                 type="number"
                 min={1}
                 max={10}
+                step="0.01"
                 required
                 value={scores[q.id] || ""}
                 onChange={(e) => handleScoreChange(q.id, e.target.value)}

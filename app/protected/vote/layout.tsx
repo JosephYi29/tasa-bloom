@@ -4,7 +4,7 @@ export default function VoteLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="max-w-4xl mx-auto w-full">
+    <div className="max-w-[1600px] mx-auto w-full">
       {children}
     </div>
   );

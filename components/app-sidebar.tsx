@@ -13,6 +13,8 @@ import {
   Settings,
   Upload,
   Shield,
+  CalendarDays,
+  UserPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -28,6 +30,8 @@ const adminLinks = [
   { href: "/protected/admin/candidates", label: "Candidates", icon: Users },
   { href: "/protected/admin/import", label: "Import", icon: Upload },
   { href: "/protected/admin/results", label: "Results", icon: BarChart3 },
+  { href: "/protected/admin/cohorts", label: "Cohorts", icon: CalendarDays },
+  { href: "/protected/admin/board", label: "Board", icon: UserPlus },
   { href: "/protected/admin/settings", label: "Settings", icon: Settings },
 ];
 

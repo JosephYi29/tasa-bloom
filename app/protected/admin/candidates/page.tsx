@@ -1,10 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/authUtils";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 
 export default async function CandidatesPage() {
-  const supabase = await createClient();
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) redirect("/protected");
+
+  const supabase = await createAdminClient();
 
   const { data: activeCohort } = await supabase
     .from("cohorts")
@@ -18,12 +23,13 @@ export default async function CandidatesPage() {
     first_name: string;
     last_name: string;
     email: string | null;
+    year: string | null;
   }[] = [];
 
   if (activeCohort) {
     const { data } = await supabase
       .from("candidates")
-      .select("id, candidate_number, first_name, last_name, email")
+      .select("id, candidate_number, first_name, last_name, email, year")
       .eq("cohort_id", activeCohort.id)
       .order("candidate_number", { ascending: true });
     candidates = data ?? [];
@@ -77,6 +83,9 @@ export default async function CandidatesPage() {
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">
                   Email
                 </th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  Year
+                </th>
                 <th className="text-right px-4 py-3 font-medium text-muted-foreground">
                   Actions
                 </th>
@@ -97,13 +106,21 @@ export default async function CandidatesPage() {
                   <td className="px-4 py-3 text-muted-foreground">
                     {c.email ?? "—"}
                   </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {c.year ?? "—"}
+                  </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/protected/admin/candidates/${c.id}`}
-                      className="text-sm text-primary hover:underline"
-                    >
-                      View
-                    </Link>
+                    <div className="flex justify-end gap-3">
+                      <Link
+                        href={`/protected/admin/candidates/${c.id}`}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        View
+                      </Link>
+                      <button className="text-sm text-destructive hover:underline opacity-50 cursor-not-allowed" title="Delete functionality not yet implemented">
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

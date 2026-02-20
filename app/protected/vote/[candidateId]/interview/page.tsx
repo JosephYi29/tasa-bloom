@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, VideoOff } from "lucide-react";
+import { ArrowLeft, ExternalLink, VideoOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { ApplicationScoringForm } from "../application/scoring-form";
 
 export default async function CandidateInterviewPage({
@@ -15,7 +15,8 @@ export default async function CandidateInterviewPage({
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
-  const supabase = await createClient();
+  const isSuperAdmin = user.email === process.env.SUPER_ADMIN_EMAIL;
+  const supabase = isSuperAdmin ? await createAdminClient() : await createClient();
 
   // 1. Get Candidate & Interview Link
   const { data: candidate } = await supabase
@@ -35,6 +36,26 @@ export default async function CandidateInterviewPage({
   if (!candidate) notFound();
   
   const isVotingOpen = (candidate.cohorts as any)?.int_voting_open ?? false;
+
+  // 1b. Get Prev/Next candidate IDs for navigation
+  const [{ data: prevCandidate }, { data: nextCandidate }] = await Promise.all([
+    supabase
+      .from("candidates")
+      .select("id")
+      .eq("cohort_id", candidate.cohort_id)
+      .lt("candidate_number", candidate.candidate_number)
+      .order("candidate_number", { ascending: false })
+      .limit(1)
+      .single(),
+    supabase
+      .from("candidates")
+      .select("id")
+      .eq("cohort_id", candidate.cohort_id)
+      .gt("candidate_number", candidate.candidate_number)
+      .order("candidate_number", { ascending: true })
+      .limit(1)
+      .single()
+  ]);
 
   const videoUrl = Array.isArray(candidate.interview_links) 
     ? candidate.interview_links[0]?.video_url 
@@ -98,6 +119,29 @@ export default async function CandidateInterviewPage({
           <p className="text-muted-foreground mt-1">
             Candidate #{candidate.candidate_number}: {candidate.first_name} {candidate.last_name}
           </p>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button asChild variant="outline" size="sm" disabled={!prevCandidate}>
+            {prevCandidate ? (
+              <Link href={`/protected/vote/${prevCandidate.id}/interview`}>
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Link>
+            ) : (
+              <span><ChevronLeft className="h-4 w-4 mr-1" /> Previous</span>
+            )}
+          </Button>
+          <Button asChild variant="outline" size="sm" disabled={!nextCandidate}>
+            {nextCandidate ? (
+              <Link href={`/protected/vote/${nextCandidate.id}/interview`}>
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            ) : (
+              <span>Next <ChevronRight className="h-4 w-4 ml-1" /></span>
+            )}
+          </Button>
         </div>
       </div>
       

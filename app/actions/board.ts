@@ -40,7 +40,7 @@ export async function addBoardMember(profileId: string, positionId: string) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/protected/admin/settings/board");
+  revalidatePath("/protected/admin/board");
   return { success: true };
 }
 
@@ -67,6 +67,6 @@ export async function removeBoardMember(userId: string) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/board");
+  revalidatePath("/protected/admin/board");
   return { success: true };
 }

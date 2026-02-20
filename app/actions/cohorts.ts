@@ -23,7 +23,7 @@ export async function createCohort(term: string, year: number) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/protected/admin/settings/cohorts");
+  revalidatePath("/protected/admin/cohorts");
   return { success: true };
 }
 
@@ -44,7 +44,7 @@ export async function updateCohort(id: string, field: string, value: boolean) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/cohorts");
+  revalidatePath("/protected/admin/cohorts");
   return { success: true };
 }
 
@@ -64,7 +64,7 @@ export async function deleteCohort(id: string) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/cohorts");
+  revalidatePath("/protected/admin/cohorts");
   return { success: true };
 }
 
