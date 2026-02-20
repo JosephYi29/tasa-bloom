@@ -3,7 +3,7 @@
 import { CurrentUser, UserData } from "@/types/app";
 import { createClient } from "@/lib/supabase/server";
 
-const SUPER_ADMIN_EMAIL = "admin@yourclub.edu";
+const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL ?? "";
 
 export async function getCurrentUser(): Promise<CurrentUser> {
 	const supabase = await createClient();

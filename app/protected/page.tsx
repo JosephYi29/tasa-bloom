@@ -1,35 +1,64 @@
+import { getCurrentUser } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { InfoIcon } from "lucide-react";
-import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
 
-export default async function ProtectedPage() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.auth.getClaims();
-  if (error || !data?.claims) {
+  if (!user) {
     redirect("/auth/login");
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col gap-12">
-      <div className="w-full">
-        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-          <InfoIcon size="16" strokeWidth={2} />
-          This is a protected page that you can only see as an authenticated
-          user
+    <div className="space-y-8">
+      {/* Welcome */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Welcome back, {user.fullName ?? "Board Member"}
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          {user.position
+            ? `${user.position} · TASA Executive Board`
+            : "TASA Executive Board"}
+        </p>
+      </div>
+
+      {/* Quick status cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="rounded-lg border border-border bg-card p-5">
+          <p className="text-sm font-medium text-muted-foreground">
+            Your Voting Progress
+          </p>
+          <p className="text-2xl font-bold mt-1">—</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Voting not yet open
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-5">
+          <p className="text-sm font-medium text-muted-foreground">
+            Candidates
+          </p>
+          <p className="text-2xl font-bold mt-1">—</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            No candidates imported yet
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-5">
+          <p className="text-sm font-medium text-muted-foreground">
+            Active Cohort
+          </p>
+          <p className="text-2xl font-bold mt-1">—</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            No active cohort set
+          </p>
         </div>
       </div>
-      <div className="flex flex-col gap-2 items-start">
-        <h2 className="font-bold text-2xl mb-4">Your user details</h2>
-        <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          {JSON.stringify(data.claims, null, 2)}
-        </pre>
-      </div>
-      <div>
-        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
-        <FetchDataSteps />
+
+      {/* Placeholder for future content */}
+      <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
+        <p className="text-sm">
+          More features coming soon — voting, candidate management, and results
+          will appear here.
+        </p>
       </div>
     </div>
   );
