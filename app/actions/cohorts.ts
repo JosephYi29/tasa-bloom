@@ -47,3 +47,23 @@ export async function updateCohort(id: string, field: string, value: boolean) {
   revalidatePath("/protected/admin/settings/cohorts");
   return { success: true };
 }
+
+export async function deleteCohort(id: string) {
+  const user = await getCurrentUser();
+  // Strictly enforce that ONLY the super admin can delete a cohort
+  if (!user || user.email !== process.env.SUPER_ADMIN_EMAIL) {
+    throw new Error("Unauthorized: Only a Super Admin can delete a cohort.");
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("cohorts")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/protected/admin/settings/cohorts");
+  return { success: true };
+}

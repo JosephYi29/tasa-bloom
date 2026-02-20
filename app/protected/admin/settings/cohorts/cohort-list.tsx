@@ -1,11 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { updateCohort } from "@/app/actions/cohorts";
+import { updateCohort, deleteCohort } from "@/app/actions/cohorts";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface Cohort {
   id: string;
@@ -17,7 +28,7 @@ interface Cohort {
   char_voting_open: boolean;
 }
 
-export function CohortList({ initialCohorts }: { initialCohorts: Cohort[] }) {
+export function CohortList({ initialCohorts, isSuperAdmin = false }: { initialCohorts: Cohort[], isSuperAdmin?: boolean }) {
   const [cohorts, setCohorts] = useState<Cohort[]>(initialCohorts);
   const [loading, setLoading] = useState<string | null>(null);
   const router = useRouter();
@@ -72,9 +83,14 @@ export function CohortList({ initialCohorts }: { initialCohorts: Cohort[] }) {
                   </span>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                ID: {cohort.id.split('-')[0]}...
-              </p>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-sm text-muted-foreground">
+                  ID: {cohort.id.split('-')[0]}...
+                </p>
+                {isSuperAdmin && (
+                  <DeleteCohortDialog cohort={cohort} />
+                )}
+              </div>
             </div>
             
             <div className="flex items-center gap-2">
@@ -148,5 +164,66 @@ export function CohortList({ initialCohorts }: { initialCohorts: Cohort[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+function DeleteCohortDialog({ cohort }: { cohort: Cohort }) {
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (confirmText !== "confirm") return;
+    setLoading(true);
+    try {
+      await deleteCohort(cohort.id);
+      setOpen(false);
+      router.refresh();
+    } catch (err: any) {
+      alert(`Error deleting cohort: ${err.message}`);
+    } finally {
+      setLoading(false);
+      setConfirmText("");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) setConfirmText(""); setOpen(o); }}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10" title="Delete Cohort">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-destructive">Delete Cohort: {cohort.term} {cohort.year}?</DialogTitle>
+          <DialogDescription>
+            This action cannot be undone. This will permanently delete the cohort and all associated data, including 
+            application questions, candidates, character traits, and all submitted board ratings securely.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleDelete} className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label htmlFor={`confirm-${cohort.id}`}>
+              Type <strong className="font-mono text-foreground">confirm</strong> to verify.
+            </Label>
+            <Input 
+              id={`confirm-${cohort.id}`}
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="confirm"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="destructive" disabled={confirmText !== "confirm" || loading}>
+              {loading ? "Deleting..." : "Delete Cohort"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

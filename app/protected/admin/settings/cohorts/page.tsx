@@ -12,6 +12,8 @@ export default async function AdminCohortsPage() {
   const user = await getCurrentUser();
   if (!user?.isAdmin) redirect("/protected");
 
+  const isSuperAdmin = user.email === process.env.SUPER_ADMIN_EMAIL;
+
   const supabase = await createClient();
 
   const { data: cohorts, error } = await supabase
@@ -36,7 +38,7 @@ export default async function AdminCohortsPage() {
         <CreateCohortDialog />
       </div>
 
-      <CohortList initialCohorts={cohorts || []} />
+      <CohortList initialCohorts={cohorts || []} isSuperAdmin={isSuperAdmin} />
     </div>
   );
 }
