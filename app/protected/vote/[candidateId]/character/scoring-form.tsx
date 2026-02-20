@@ -10,9 +10,10 @@ interface CharacterFormProps {
   cohortId: string;
   traits: { id: string; name: string }[];
   initialScores: Record<string, number>;
+  isVotingOpen?: boolean;
 }
 
-export function CharacterScoringForm({ candidateId, cohortId, traits, initialScores }: CharacterFormProps) {
+export function CharacterScoringForm({ candidateId, cohortId, traits, initialScores, isVotingOpen = true }: CharacterFormProps) {
   const [scores, setScores] = useState<Record<string, number>>(initialScores);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -30,7 +31,7 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (saving) return;
+    if (saving || !isVotingOpen) return;
 
     // Validate all have scores
     const missing = traits.filter(t => scores[t.id] === undefined);
@@ -80,6 +81,7 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
                 onChange={(e) => handleScoreChange(t.id, e.target.value)}
                 className="flex h-10 w-24 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="1-10"
+                disabled={saving || !isVotingOpen}
               />
               <span className="text-sm text-muted-foreground whitespace-nowrap">/ 10</span>
             </div>
@@ -93,9 +95,14 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={saving}>
-        {saving ? "Saving..." : "Save Character Scores"}
-      </Button>
+      <div>
+        <Button type="submit" className="w-full" disabled={saving || !isVotingOpen}>
+          {saving ? "Saving..." : "Save Character Scores"}
+        </Button>
+        {!isVotingOpen && (
+          <p className="text-xs text-center text-destructive mt-3">Voting is closed.</p>
+        )}
+      </div>
     </form>
   );
 }

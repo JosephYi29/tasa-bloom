@@ -15,8 +15,8 @@ const adminLinks = [
   { href: "/protected/admin", label: "Overview", icon: Shield },
   { href: "/protected/admin/candidates", label: "Candidates", icon: Users },
   { href: "/protected/admin/import", label: "Import", icon: Upload },
-  { href: "/protected/admin/results", label: "Results", icon: BarChart3 },
-  { href: "/protected/admin/settings", label: "Settings", icon: Settings },
+  { href: "/protected/admin/oversight", label: "Oversight", icon: BarChart3 },
+  { href: "/protected/admin/settings/cohorts", label: "Settings", icon: Settings },
 ];
 
 interface AdminNavProps {

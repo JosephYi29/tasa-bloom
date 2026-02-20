@@ -10,9 +10,10 @@ interface ScoringFormProps {
   cohortId: string;
   questions: { id: string; text: string }[];
   initialScores: Record<string, number>;
+  isVotingOpen?: boolean;
 }
 
-export function ApplicationScoringForm({ candidateId, cohortId, questions, initialScores }: ScoringFormProps) {
+export function ApplicationScoringForm({ candidateId, cohortId, questions, initialScores, isVotingOpen = true }: ScoringFormProps) {
   const [scores, setScores] = useState<Record<string, number>>(initialScores);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -30,7 +31,7 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (saving) return;
+    if (saving || !isVotingOpen) return;
 
     // Validate all have scores
     const missing = questions.filter(q => scores[q.id] === undefined);
@@ -78,6 +79,7 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
                 onChange={(e) => handleScoreChange(q.id, e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="1-10"
+                disabled={saving || !isVotingOpen}
               />
               <span className="text-xs text-muted-foreground whitespace-nowrap">/ 10</span>
             </div>

@@ -59,3 +59,20 @@ To confirm everything worked end-to-end:
 1. Go back to your local Supabase Studio.
 2. Check the `ratings` table. You should see records linking your `user_id` to `candidate_id`.
 3. Check the `rating_scores` table. You should see your 1-10 scores securely stored.
+
+## 6. Test Admin Settings & Phase Locks (Phase 4)
+Let's verify the new admin oversight and cohort management tools.
+
+1. As an admin, click **Settings** in the Admin sidebar.
+2. **Current Cohort:** You should be on the Cohorts tab. Verify you see the active cohort you created earlier.
+3. **Voting Phase Locks:** Toggle the **App Voting**, **Interview Voting**, and **Character Voting** switches to OFF (gray).
+4. **Member UI Check:** Go to the regular **Vote** tab and click on a candidate's App, Interview, or Character page. You should see a red banner indicating voting is closed, and the score inputs/save buttons should be disabled.
+5. Go back to Admin **Settings** and turn the switches back ON.
+6. **Create a New Cohort:** Click **New Cohort**, select a term, type a year, and hit Create. It should appear in the list as inactive.
+7. Activate the new cohort. The old one should automatically deactivate (triggering the database constraint). *Warning: This will change the active cohort for the whole app!* Switch back to your original active cohort when done.
+8. **Board Management:** Click the **Board Members** tab under Settings.
+   * Add a registered user (e.g., yourself or a dummy account) to the board for the active cohort, assigning them a position (e.g., "President").
+   * Verify they appear in the list.
+9. **Oversight Dashboard:** Click **Oversight** in the Admin sidebar.
+   * You should see progress bars for every board member in the active cohort.
+   * If you submitted scores in Step 4, your progress bar should reflect the number of candidates you've rated versus the total number of candidates in the active cohort.

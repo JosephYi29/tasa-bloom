@@ -20,11 +20,20 @@ export default async function CandidateCharacterPage({
   // 1. Get Candidate
   const { data: candidate } = await supabase
     .from("candidates")
-    .select("id, candidate_number, first_name, last_name, cohort_id")
+    .select(`
+      id, 
+      candidate_number, 
+      first_name, 
+      last_name, 
+      cohort_id,
+      cohorts ( char_voting_open )
+    `)
     .eq("id", candidateId)
     .single();
 
   if (!candidate) notFound();
+  
+  const isVotingOpen = (candidate.cohorts as any)?.char_voting_open ?? false;
 
   // 2. Get Character Traits
   const { data: traits } = await supabase
@@ -78,6 +87,13 @@ export default async function CandidateCharacterPage({
           </p>
         </div>
       </div>
+      
+      {!isVotingOpen && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg flex items-center gap-3">
+          <div className="font-semibold">Character Voting is Closed</div>
+          <div className="text-sm opacity-90">An admin has locked this voting phase. You can view your past scores but cannot submit changes.</div>
+        </div>
+      )}
 
       <div className="pt-8">
         {mappedTraits.length > 0 ? (
@@ -86,6 +102,7 @@ export default async function CandidateCharacterPage({
             cohortId={candidate.cohort_id}
             traits={mappedTraits}
             initialScores={existingScores}
+            isVotingOpen={isVotingOpen}
           />
         ) : (
           <div className="border border-border border-dashed rounded-lg bg-card p-12 text-center text-muted-foreground">

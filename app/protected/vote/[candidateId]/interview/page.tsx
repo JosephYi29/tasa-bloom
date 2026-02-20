@@ -26,12 +26,15 @@ export default async function CandidateInterviewPage({
       first_name, 
       last_name, 
       cohort_id,
-      interview_links (video_url)
+      interview_links (video_url),
+      cohorts ( int_voting_open )
     `)
     .eq("id", candidateId)
     .single();
 
   if (!candidate) notFound();
+  
+  const isVotingOpen = (candidate.cohorts as any)?.int_voting_open ?? false;
 
   const videoUrl = Array.isArray(candidate.interview_links) 
     ? candidate.interview_links[0]?.video_url 
@@ -97,6 +100,13 @@ export default async function CandidateInterviewPage({
           </p>
         </div>
       </div>
+      
+      {!isVotingOpen && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg flex items-center gap-3">
+          <div className="font-semibold">Interview Voting is Closed</div>
+          <div className="text-sm opacity-90">An admin has locked this voting phase. You can view your past scores but cannot submit changes.</div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8 items-start">
         {/* Left Column: Video Embed */}
@@ -137,6 +147,7 @@ export default async function CandidateInterviewPage({
               cohortId={candidate.cohort_id}
               questions={mappedQuestions}
               initialScores={existingScores}
+              isVotingOpen={isVotingOpen}
             />
           ) : (
             <div className="border border-border border-dashed rounded-lg bg-card p-5 text-center text-muted-foreground text-sm">

@@ -17,14 +17,23 @@ export default async function CandidateApplicationPage({
 
   const supabase = await createClient();
 
-  // 1. Get Candidate
+  // 1. Get Candidate and Cohort details
   const { data: candidate } = await supabase
     .from("candidates")
-    .select("id, candidate_number, first_name, last_name, cohort_id")
+    .select(`
+      id, 
+      candidate_number, 
+      first_name, 
+      last_name, 
+      cohort_id,
+      cohorts ( app_voting_open )
+    `)
     .eq("id", candidateId)
     .single();
 
   if (!candidate) notFound();
+  
+  const isVotingOpen = (candidate.cohorts as any)?.app_voting_open ?? false;
 
   // 2. Get Application Questions and Responses
   // We fetch explicitly instead of relying on the complex join.
@@ -90,6 +99,13 @@ export default async function CandidateApplicationPage({
           </p>
         </div>
       </div>
+      
+      {!isVotingOpen && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg flex items-center gap-3">
+          <div className="font-semibold">Application Voting is Closed</div>
+          <div className="text-sm opacity-90">An admin has locked this voting phase. You can view your past scores but cannot submit changes.</div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8 items-start">
         {/* Left Column: Application Responses */}
@@ -120,6 +136,7 @@ export default async function CandidateApplicationPage({
             cohortId={candidate.cohort_id}
             questions={mergedQuestions.map(q => ({ id: q.id, text: q.questionText }))}
             initialScores={existingScores}
+            isVotingOpen={isVotingOpen}
           />
         </div>
       </div>
