@@ -32,12 +32,14 @@ export default async function VoteHubPage() {
         candidate_number,
         first_name,
         last_name,
+        custom_order,
         ratings 
           (rating_type)
       `)
       .eq("cohort_id", activeCohort.id)
       .eq("ratings.voter_id", user.id) // Only get ratings submitted by current user
-      .order("candidate_number", { ascending: true });
+      .order("custom_order", { ascending: true }) // custom_order first priority
+      .order("candidate_number", { ascending: true }); // safety fallback
     
     // The cast is needed because Supabase types might not perfectly match the join structure
     candidates = (data as unknown as typeof candidates) ?? [];
