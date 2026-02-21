@@ -145,7 +145,7 @@ The application determines permissions based on the **currently active cohort**.
 - [x] Enable RLS on all new tables
 - [x] Policies: Board members (with membership in active cohort) can **read** candidates, questions, and responses
 - [x] Only admins (positions with `is_admin = true`) can **insert/update/delete** candidate data
-- [ ] Run `supabase db push`
+- [x] Run `supabase db push`
 
 ### Step 2.3: Google Sheets → Database Import Strategy
 
@@ -180,10 +180,10 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] **Import page** (`/protected/admin/import`): CSV upload + column mapping + preview + import (`components/csv-importer.tsx`)
 - [x] Admin route protection (`/protected/admin/layout.tsx` — redirects non-admins)
 - [x] Admin overview page with quick action cards
-- [ ] **Candidate Detail View** (`/protected/admin/candidates/[id]`): Shows full profile, responses, and interview video.
-- [ ] Manual add/edit/delete individual candidates (Include a Delete action on the candidate list table)
-- [ ] Upload/link interview recordings per candidate
-- [ ] Manage application questions per cohort (add, edit, reorder, delete)
+- [x] **Candidate Detail View** (`/protected/admin/candidates/[id]`): Shows full profile, responses, and interview video.
+- [x] Manual add/edit/delete individual candidates (Include a Delete action on the candidate list table)
+- [x] Upload/link interview recordings per candidate
+- [x] Manage application questions per cohort (add, edit, reorder, delete)
 
 ---
 
@@ -230,44 +230,44 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 **Default seed traits**: Overall Character, Drive, Logistical Abilities (with the ability to modify as the club evolves).
 
-### Step 3.3: Migration & RLS
-- [ ] Write migration `05_create_rating_tables.sql`
-- [ ] RLS: Board members can **insert and update their own ratings** only
-- [ ] RLS: Board members **cannot read other members' ratings**
-- [ ] RLS: Admins can **read all ratings** for the active cohort
-- [ ] Unique constraint: one rating per `(candidate_id, voter_id, cohort_id, rating_type)`
-- [ ] CHECK constraint: `score BETWEEN 1 AND 10`
+### Step 3.3: Migration & RLS ✅
+- [x] Write migration `05_create_rating_tables.sql`
+- [x] RLS: Board members can **insert and update their own ratings** only
+- [x] RLS: Board members **cannot read other members' ratings**
+- [x] RLS: Admins can **read all ratings** for the active cohort
+- [x] Unique constraint: one rating per `(candidate_id, voter_id, cohort_id, rating_type)`
+- [x] CHECK constraint: `score BETWEEN 1 AND 10`
 
-### Step 3.4: Voting UI — Application Rating
-- [ ] Create `/vote` route — the main voting hub
-- [ ] Candidate list sidebar (or top nav) showing all candidates for the active cohort
-- [ ] **Application Rating View** (`/vote/[candidateId]/application`):
-  - Display each application question alongside the candidate's response
-  - Slider or number input (1–10) for each question
-  - Optional comment box per question
-  - Save as draft / Submit final rating
-  - Visual indicator showing which candidates the voter has already rated
-  - **CRITICAL**: Application rating must be completely anonymous. The candidate's name and identifying details should be hidden from the voter during this phase.
+### Step 3.4: Voting UI — Application Rating ✅
+- [x] Create `/vote` route — the main voting hub
+- [x] Candidate list sidebar (or top nav) showing all candidates for the active cohort
+- [x] **Application Rating View** (`/vote/[candidateId]/application`):
+  - [x] Display each application question alongside the candidate's response
+  - [x] Slider or number input (1–10) for each question
+  - [x] Optional comment box per question
+  - [x] Save as draft / Submit final rating
+  - [x] Visual indicator showing which candidates the voter has already rated
+  - [x] **CRITICAL**: Application rating must be completely anonymous. The candidate's name and identifying details should be hidden from the voter during this phase.
 
-### Step 3.5: Voting UI — Interview Rating
-- [ ] **Interview Rating View** (`/vote/[candidateId]/interview`):
-  - Embedded video player or link to Google Drive recording
-  - Display interview questions alongside rating inputs (1–10)
-  - Optional comment box per question
-  - Save / Submit
+### Step 3.5: Voting UI — Interview Rating ✅
+- [x] **Interview Rating View** (`/vote/[candidateId]/interview`):
+  - [x] Embedded video player or link to Google Drive recording
+  - [x] Display interview questions alongside rating inputs (1–10)
+  - [x] Optional comment box per question
+  - [x] Save / Submit
 
-### Step 3.6: Voting UI — Character Evaluation
-- [ ] **Character Evaluation View** (`/vote/[candidateId]/character`):
-  - Display character traits (Overall Character, Drive, Logistical Abilities, etc.)
-  - Score input (1–10) per trait
-  - Optional comment per trait
-  - Save / Submit
+### Step 3.6: Voting UI — Character Evaluation ✅
+- [x] **Character Evaluation View** (`/vote/[candidateId]/character`):
+  - [x] Display character traits (Overall Character, Drive, Logistical Abilities, etc.)
+  - [x] Score input (1–10) per trait
+  - [x] Optional comment per trait
+  - [x] Save / Submit
   - Note: This phase will *always* occur AFTER the Interview and Application phases, typically during an in-person group discussion. Admins will lock this phase until the earlier phases are complete.
 
-### Step 3.7: Voting Progress Tracker
-- [ ] Dashboard showing the voter's progress: which candidates have been rated, which are pending
-- [ ] Color-coded status: ⬜ Not Started, 🟡 In Progress (drafted), ✅ Complete
-- [ ] Separate progress for Application / Interview / Character
+### Step 3.7: Voting Progress Tracker ✅
+- [x] Dashboard showing the voter's progress: which candidates have been rated, which are pending
+- [x] Color-coded status: ⬜ Not Started, 🟡 In Progress (drafted), ✅ Complete
+- [x] Separate progress for Application / Interview / Character
 
 ---
 
@@ -275,30 +275,30 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 > **Goal**: Give admins (President, Secretary) full visibility into the voting process and tools to manage the evaluation cycle.
 
-### Step 4.1: Admin Route Protection
-- [ ] Create `/admin` route group
-- [ ] Middleware: verify `isAdmin === true` before granting access
-- [ ] Redirect non-admin users to `/vote` with a toast/error message
+### Step 4.1: Admin Route Protection ✅
+- [x] Create `/admin` route group
+- [x] Middleware: verify `isAdmin === true` before granting access
+- [x] Redirect non-admin users to `/vote` with a toast/error message
 
-### Step 4.2: Admin — Cohort Management
-- [ ] View all cohorts (historical + current)
-- [ ] Create new cohort (e.g., "Fall 2026")
-- [ ] Toggle `is_active` on a cohort (only one active at a time — enforce via DB trigger or app logic)
-- [ ] View/manage board memberships for each cohort
-- [ ] Invite/add board members to a cohort, assign positions
+### Step 4.2: Admin — Cohort Management ✅
+- [x] View all cohorts (historical + current)
+- [x] Create new cohort (e.g., "Fall 2026")
+- [x] Toggle `is_active` on a cohort (only one active at a time — enforce via DB trigger or app logic)
+- [x] View/manage board memberships for each cohort
+- [x] Invite/add board members to a cohort, assign positions
 
-### Step 4.3: Admin — Voting Oversight
-- [ ] **Board Member Progress**: See which board members have completed their ratings (per category)
-- [ ] **Individual Vote Viewer**: View all scores submitted by a specific board member
-- [ ] **Candidate Vote Breakdown**: View all individual scores for a specific candidate, broken down by voter
+### Step 4.3: Admin — Voting Oversight ✅
+- [x] **Board Member Progress**: See which board members have completed their ratings (per category)
+- [x] **Individual Vote Viewer**: View all scores submitted by a specific board member
+- [x] **Candidate Vote Breakdown**: View all individual scores for a specific candidate, broken down by voter
 
-### Step 4.4: Admin — Lock/Unlock Voting Phases
-- [ ] Ability to open/close each voting phase independently:
+### Step 4.4: Admin — Lock/Unlock Voting Phases ✅
+- [x] Ability to open/close each voting phase independently:
   - Application Rating: Open / Closed
   - Interview Rating: Open / Closed
   - Character Evaluation: Open / Closed
-- [ ] Board members see a clear "Voting is closed" message when a phase is locked
-- [ ] Store phase status in a `voting_phases` table or as columns on `cohorts`
+- [x] Board members see a clear "Voting is closed" message when a phase is locked
+- [x] Store phase status in a `voting_phases` table or as columns on `cohorts`
 
 ---
 
@@ -348,33 +348,33 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 ## 💅 Phase 6: Polish, UX & Deployment
 
-### Step 6.1: Navigation & Layout
-- [ ] Build proper app shell with sidebar navigation:
+### Step 6.1: Navigation & Layout ✅
+- [x] Build proper app shell with sidebar navigation:
   - **Board Members**: Vote, My Progress, Profile
   - **Admins** (additional): Candidates, Results, Board Management, Cohort Settings
-- [ ] `<AdminNav />` component (conditionally rendered based on `isAdmin`)
-- [ ] Responsive design for tablet/mobile use during character eval meetings
+- [x] `<AdminNav />` component (conditionally rendered based on `isAdmin`)
+- [x] Responsive design for tablet/mobile use during character eval meetings
 
-### Step 6.2: User Onboarding
-- [ ] Profile setup flow on first login (name, grad year)
-- [ ] Welcome page explaining the voting process
-- [ ] Auto-detect if user has a board membership for the active cohort
+### Step 6.2: User Onboarding ✅
+- [x] Profile setup flow on first login (name, grad year)
+- [x] Welcome page explaining the voting process
+- [x] Auto-detect if user has a board membership for the active cohort
 
-### Step 6.3: UX Enhancements
-- [ ] Toast notifications for save/submit actions
-- [ ] Confirmation dialog before final submission ("Are you sure? You cannot change your scores after submitting.")
-- [ ] Loading states and skeleton screens
-- [ ] Dark mode support (already have `next-themes` installed)
+### Step 6.3: UX Enhancements ✅
+- [x] Toast notifications for save/submit actions
+- [x] Confirmation dialog before final submission ("Are you sure? You cannot change your scores after submitting.")
+- [x] Loading states and skeleton screens
+- [x] Dark mode support (already have `next-themes` installed)
 
 ### Step 6.4: Deployment
-- [ ] Deploy frontend to Vercel
-- [ ] Supabase project configured for production
-- [ ] Environment variables set in Vercel dashboard
+- [x] Deploy frontend to Vercel
+- [x] Supabase project configured for production
+- [x] Environment variables set in Vercel dashboard
 - [ ] Custom domain setup (optional)
-- [ ] Seed production DB: Create first "Spring 2026" cohort, seed board positions, invite initial admin users
+- [x] Seed production DB: Create first "Spring 2026" cohort, seed board positions, invite initial admin users
 
 ### Step 6.5: Backlog / Future Enhancements
-- [ ] **Global Settings Page (`/protected/admin/settings`)**: A dedicated page for managing global configurations such as scoring weights, default character traits, notification settings, and other app-wide parameters that don't belong strictly to a single cohort.
+- [x] **Global Settings Page (`/protected/admin/settings`)**: A dedicated page for managing global configurations such as scoring weights, default character traits, notification settings, and other app-wide parameters that don't belong strictly to a single cohort.
 
 ---
 
