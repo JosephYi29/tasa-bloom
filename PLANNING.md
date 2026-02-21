@@ -404,7 +404,56 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 ---
 
-## 📐 Database Schema Summary (All Phases)
+## � Phase 8: Audit Logging & Security
+
+> **Goal**: Ensure the integrity of the voting process by tracking sensitive administrative and voting actions.
+
+### Step 8.1: Audit Log Architecture
+- [ ] **`audit_logs` table**: Record `action_type`, `user_id`, `target_id`, `metadata` (JSON), and `created_at`.
+- [ ] Log admin actions: Changing scoring weights, opening/closing voting phases, adding/removing board members.
+- [ ] Log voting actions: Track when a board member starts and finally submits a voting phase (no need to log every individual keystroke, just state changes).
+
+### Step 8.2: Admin Audit Dashboard
+- [ ] Create `/protected/admin/oversight/audit` page.
+- [ ] Display a chronological timeline of system events.
+- [ ] Filter by action type, date, or specific user.
+
+---
+
+## 📧 Phase 9: Automated Communications
+
+> **Goal**: Reduce administrative overhead by sending automated reminders and candidate updates directly from the platform.
+
+### Step 9.1: Email Provider Integration
+- [ ] Integrate a transactional email service (e.g., Resend, SendGrid, or AWS SES).
+- [ ] Create React Email templates for standard notifications.
+
+### Step 9.2: Internal Operations (Board Members)
+- [ ] **Automated Reminders**: Send an email to board members who have incomplete ratings 24 hours before a phase deadline.
+- [ ] **Phase Activity Alerts**: Notify board members when the Admin unlocks the Character Evaluation phase.
+
+### Step 9.3: External Operations (Candidates)
+- [ ] **Decision Pipelines**: Build an admin UI to assign "Accepted", "Rejected", or "Waitlisted" statuses to candidates based on Results.
+- [ ] **Batch Emailing**: Send templated decision emails to candidates in bulk, pulling in their `first_name` and `email` dynamically.
+
+---
+
+## 📄 Phase 10: Automated Candidate Feedback Generation
+
+> **Goal**: Provide a standardized, unbiased way to return feedback to applicants who request it, using the data already captured during voting.
+
+### Step 10.1: Feedback Report Data Parsing
+- [ ] Develop a server-side engine to aggregate a candidate's non-outlier comments and scores.
+- [ ] Strip identifying voter information from comments to maintain anonymity.
+- [ ] Use LLM (e.g., OpenAI API) or strict templating to synthesize raw comments into a cohesive, professional "Strengths" and "Areas for Growth" summary.
+
+### Step 10.2: Feedback Export UI
+- [ ] Add a "Generate Feedback Report" button to the Admin Candidate Detail view.
+- [ ] Output the report as a downloadable PDF or a securely shareable link for the candidate.
+
+---
+
+## �📐 Database Schema Summary (All Phases)
 
 ```
 ┌──────────────┐     ┌───────────────────┐     ┌─────────────────┐
@@ -481,6 +530,9 @@ CSV Headers → Map → Create/reuse `application_question` records
 | 7 | 5.1–5.3 | Analytics engine, leaderboard, CSV export | Step 6 |
 | 8 | 6.1–6.4 | Polish, responsive design, deploy | Step 7 |
 | 9 | 7.1-7.4 | Legacy data import schema, UI, and algorithms | Step 8 |
+| 10 | 8.1-8.2 | Audit Logging & Security | Step 8 |
+| 11 | 9.1-9.3 | Automated Communications (Internal & External) | Step 8 |
+| 12 | 10.1-10.2 | Candidate Feedback Report Generation | Step 7 |
 
 ---
 
