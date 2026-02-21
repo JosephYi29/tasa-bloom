@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, AlertTriangle } from "lucide-react";
 import { defaultWeights } from "@/lib/constants";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const metadata = {
   title: "Admin | Candidate Details",
@@ -56,13 +57,18 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
       id,
       rating_type,
       voter_id,
+      legacy_voter_alias,
+      imported_by,
       rating_scores (
         score,
         question_id,
-        trait_name,
+        trait_id,
         comment,
         application_questions (
           question_text
+        ),
+        character_traits (
+          trait_name
         )
       )
     `)
@@ -75,11 +81,11 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
   rawRatings?.forEach((rating: any) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rating.rating_scores.forEach((rs: any) => {
-      const key = rs.question_id || rs.trait_name || "unknown";
+      const key = rs.question_id || rs.trait_id || "unknown";
       if (!scoresByItem[key]) {
         scoresByItem[key] = {
           type: rating.rating_type,
-          text: rs.application_questions?.question_text || rs.trait_name || "Unknown Item",
+          text: rs.application_questions?.question_text || rs.character_traits?.trait_name || "Unknown Item",
           scores: [],
           comments: []
         };
@@ -154,10 +160,17 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
                           <span>{item.scores.length}</span>
                         </div>
                         {outliers.length > 0 && (
-                          <div className="flex items-center gap-1.5 border-l pl-4 text-amber-600 dark:text-amber-500">
-                            <AlertTriangle className="w-4 h-4" />
-                            <span>{outliers.length} Outlier(s): {outliers.join(", ")}</span>
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1.5 border-l pl-4 text-amber-600 dark:text-amber-500 cursor-help transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                                <AlertTriangle className="w-4 h-4" />
+                                <span>{outliers.length} Outlier(s) flagged</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Specific outlier values: <span className="font-bold">{outliers.join(", ")}</span></p>
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
 
@@ -180,6 +193,98 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
             </div>
           );
         })}
+
+        {/* Voter Breakdown Section */}
+        {rawRatings && rawRatings.filter((r: unknown) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const rating = r as any;
+          return rating.rating_scores && rating.rating_scores.length > 0;
+        }).length > 0 && (
+          <div className="border rounded-lg bg-card overflow-hidden mt-8">
+            <div className="bg-muted px-4 py-3 border-b flex items-center justify-between">
+              <h2 className="font-semibold text-lg">Detailed Voter Breakdown</h2>
+              <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">Admin Only</span>
+            </div>
+            <div className="divide-y">
+              {rawRatings.filter((r: unknown) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const rating = r as any;
+                return rating.rating_scores && rating.rating_scores.length > 0;
+              }).map((rating: unknown, rIdx: number) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const r = rating as any;
+                const voterName = r.legacy_voter_alias 
+                  ? `${r.legacy_voter_alias} (Historical Import)` 
+                  : r.voter_id 
+                    ? `Voter ID: ${r.voter_id.substring(0, 8)}...` 
+                    : "Unknown Voter";
+
+                return (
+                  <div key={r.id || rIdx} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-sm text-foreground/90 flex items-center gap-2">
+                        {voterName}
+                        {r.imported_by && (
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded border">
+                            Imported manually
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                        {r.rating_type} Phase
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                      {r.rating_scores.map((rs: unknown, rsIdx: number) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const score = rs as any;
+                        const questionLabel = score.application_questions?.question_text || score.character_traits?.trait_name || "Unknown Item";
+                        
+                        const key = score.question_id || score.trait_id || "unknown";
+                        let isOutlier = false;
+                        if (scoresByItem[key]) {
+                          const stats = getStats(scoresByItem[key].scores);
+                          isOutlier = Math.abs(score.score - stats.mean) > stdThreshold * stats.stdev;
+                        }
+
+                        return (
+                          <div key={rsIdx} className={`text-sm border rounded-md p-2 flex flex-col justify-between ${isOutlier ? "bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50" : "bg-muted/20"}`}>
+                            <span className="text-muted-foreground text-xs line-clamp-1 truncate block mb-1" title={questionLabel}>
+                              {questionLabel}
+                            </span>
+                            <div className="flex justify-between items-end">
+                              <span className="font-bold text-base flex items-center gap-1.5">
+                                {score.score} <span className="text-xs font-normal text-muted-foreground">/10</span>
+                                {isOutlier && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="cursor-help transition-colors hover:opacity-80">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                      <p>This score is a statistical outlier compared to the board average.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </span>
+                              {score.comment && (
+                                <span className="text-xs text-muted-foreground italic truncate max-w-[120px]" title={score.comment}>
+                                  &quot;{score.comment}&quot;
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {Object.keys(scoresByItem).length === 0 && (
           <div className="text-center py-12 border rounded-lg border-dashed">

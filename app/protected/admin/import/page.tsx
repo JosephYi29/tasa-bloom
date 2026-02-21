@@ -1,4 +1,5 @@
 import { CsvImporter } from "@/components/csv-importer";
+import { LegacyCsvImporter } from "@/components/legacy-csv-importer";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ImportPage() {
@@ -29,10 +30,27 @@ export default async function ImportPage() {
           </p>
         </div>
       ) : (
-        <CsvImporter
-          cohortId={activeCohort.id}
-          cohortLabel={`${activeCohort.term} ${activeCohort.year}`}
-        />
+        <div className="space-y-12">
+          <section>
+            <CsvImporter
+              cohortId={activeCohort.id}
+              cohortLabel={`${activeCohort.term} ${activeCohort.year}`}
+            />
+          </section>
+          
+          <section className="border-t pt-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold tracking-tight">Historical Voting Data</h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Upload historical cohort voting scores where board members do not have a registered profile.
+              </p>
+            </div>
+            <LegacyCsvImporter
+              cohortId={activeCohort.id}
+              cohortLabel={`${activeCohort.term} ${activeCohort.year}`}
+            />
+          </section>
+        </div>
       )}
     </div>
   );

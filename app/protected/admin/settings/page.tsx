@@ -23,6 +23,19 @@ export default function AdminSettingsPage() {
             </p>
           </div>
         </Link>
+
+        {/* Character Traits Setting */}
+        <Link href="/protected/admin/settings/traits" className="block group">
+          <div className="border border-border p-6 rounded-lg hover:border-primary/50 transition-colors bg-card h-full flex flex-col">
+            <h3 className="text-lg font-semibold flex items-center gap-2 group-hover:text-primary transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 lucide lucide-users-round text-foreground group-hover:text-primary transition-colors"><path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/></svg>
+              Character Traits
+            </h3>
+            <p className="text-sm text-muted-foreground mt-2 flex-1">
+              Add, edit, or remove the exact traits that Board Members will evaluate candidates on.
+            </p>
+          </div>
+        </Link>
       </div>
     </div>
   );

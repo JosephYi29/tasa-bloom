@@ -184,6 +184,8 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] Manual add/edit/delete individual candidates (Include Edit modal and Delete confirmation on the candidate list table)
 - [ ] Upload/link interview recordings per candidate
 - [ ] Manage application questions per cohort (add, edit, reorder, delete)
+- [ ] **Dynamic Sorting**: Allow admins to easily sort the candidate table list numerically by Candidate Number.
+- [ ] **Remap Candidate Order Feature**: Introduce an action button allowing admins to visually sort the table (e.g., alphabetically) and then automatically reassign all Candidate Numbers sequentially (1, 2, 3...) based on that new view.
 
 ---
 
@@ -262,6 +264,7 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Score input (1–10) per trait
   - [x] Optional comment per trait
   - [x] Save / Submit final rating (with AlertDialog confirmation)
+  - [ ] **Abstain Option**: Allow voters to explicitly "Abstain" from evaluating a candidate. This records their ballot as submitted (for voting progress tracking) but excludes their null scores from the candidate's average calculation entirely.
   - Note: This phase will *always* occur AFTER the Interview and Application phases, typically during an in-person group discussion. Admins will lock this phase until the earlier phases are complete.
 
 ### Step 3.7: Voting Progress Tracker
@@ -378,33 +381,59 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 ---
 
-## 🏛️ Phase 7: Legacy Historical Data Import
+## 📜 Phase 7: Legacy Historical Data Import (Completed)
 
-> **Goal**: Allow administrators to import and preserve raw application, interview, and character voting records from previous cohorts where the original board members will never register on the platform.
+> **Goal**: Allow import and preservation of raw application, interview, and character voting records from previous cohorts where the original board members will never register on the platform.
 
-### Step 7.1: Database Schema Modifications (Legacy Support)
-- [ ] **Nullable `voter_id`**: Update the `ratings` table to drop the `NOT NULL` constraint on `voter_id` (a foreign key to `auth.users`).
-- [ ] **Add `legacy_voter_alias`**: Add a new `TEXT` column to the `ratings` table.
-  - *Logic*: For modern votes, `voter_id` is set, and `legacy_voter_alias` is null. For imported historical votes, `voter_id` is null, and `legacy_voter_alias` stores the string name of the previous board member (e.g., "Jane Smith").
+### Step 7.1: Database Schema Modifications
+- [x] Modify `public.ratings` table to drop `NOT NULL` constraint on `voter_id`.
+- [x] Add new text column `legacy_voter_alias` to `public.ratings`.
+- [x] Add `imported_by` column pointing to `auth.users(id)` for strict audit trails.
+- [x] Implement check constraint `voter_id_or_legacy_voter_alias` to ensure either `voter_id` or (`legacy_voter_alias` AND `imported_by`) exists.
+- [x] Configure dedicated `INSERT` and `UPDATE` Row Level Security policies explicitly targeting these legacy conditions.
+- [x] Regenerate TypeScript Supabase definitions.
 
-### Step 7.2: Legacy Data Import UI
-- [ ] Create `/protected/admin/import/legacy` route exclusively for admins.
-- [ ] **CSV Uploader**: Drag-and-drop component specifically designed for historical ratings data.
-- [ ] **Schema Requirements**: The uploaded spreadsheet dictates the target Cohort Term/Year, Candidate Name, Voting Category, Question/Trait, Score, optional Comment, and the string-based Voter Name.
+### Step 7.2: Legacy Data Import UI (Completed)
+- [x] Create `/protected/admin/import` second dedicated upload section exclusively for administrators uploading past data.
+- [x] Develop `legacy-csv-importer.tsx` tailored with auto-detecting column mappings like `voter_name` or `question`.
+- [x] Provide robust data preview steps similar to standard Candidate Imports.
+- [x] Added dynamic dropdown to allow importing scores into either Application, Interview, or Character phases.
 
-### Step 7.3: Import Execution Engine
-- [ ] **Idempotent Pre-processing**: 
-  - Ensure the target historical cohort exists (create if not).
-  - Ensure the historically referenced candidates exist (create if not).
-- [ ] **Bulk Insertion**: Map the CSV rows and execute a bulk insert into `ratings` (setting `voter_id = NULL` and passing `legacy_voter_alias`) and their child `rating_scores` rows. Bypasses standard active-cohort constraints.
+### Step 7.3: Import Execution Engine (Completed)
+- [x] Create the server action `importLegacyRatings` to handle bulk transaction.
+- [x] Idempotent Pre-processing: Validate cohort, safely fetch/create Candidates.
+- [x] Handle generic scores by gracefully injecting Application Question rows (e.g. "Legacy Q1") on the fly.
+- [x] Insert `public.ratings` (`voter_id` = null) and `public.rating_scores`.
+- [x] Enforced `NUMERIC(4,2)` precision to preserve raw decimal scores from historical datasets instead of rounding.
+- [x] Created `guessMapping` parser to prioritize reviewer identification and prevent ballot overwriting.
 
-### Step 7.4: Results Engine Compatibility
-- [ ] Ensure the existing `lib/scoring.ts` logic safely calculates candidate averages when a rating's `voter_id` is null.
-- [ ] Update frontend Admin views (like the future per-voter breakdowns on the Details page) to seamlessly fall back to displaying the `legacy_voter_alias` when `voter_id` is missing.
+### Step 7.4: Results Engine Compatibility (Completed)
+- [x] Ensure the existing `lib/scoring.ts` logic safely calculates candidate averages when a rating's `voter_id` is null.
+- [x] Update frontend Admin views (like the per-voter breakdowns on the Details page) to seamlessly fall back to displaying the `legacy_voter_alias` when `voter_id` is missing.
+- [x] Applied automatic UI filters to block "Ghost records" (users with 0 scores) from appearing in breakdown lists.
+
+### Step 7.5: UX/UI Quality of Life Features (Completed)
+- [x] Added `lucide-react` loading spinners (`Loader2`) and explicit warning panels during bulk CSV Candidate and Historical Data uploads to prevent accidental page reloads.
+- [x] Integrated `shadcn/ui` Tooltips across the Results dashboard to display helpful contextual hover-text for statistical score Outliers (Yellow Triangles).
+- [x] Extended Outlier logic into the deepest `[id]/page.tsx` Individual Voter detailed breakdown so admins can isolate exactly who skewed the candidate's average on a per-question basis.
 
 ---
 
-## � Phase 8: Audit Logging & Security
+## ⚙️ Phase 8: Character Trait Management (Completed)
+
+> **Goal**: Provide administrators full dynamic control over the qualitative tags that board members are asked to rate candidates on during the Character Evaluation phase of Voting.
+
+### Step 8.1: Settings Dashboard
+- [x] Appended a new `Character Traits` tile into the global `/protected/admin/settings` UI.
+- [x] Built `trait-manager.tsx` capable of fetching the current Active Cohort's exact evaluations requirements.
+
+### Step 8.2: Database Interaction
+- [x] Added Server Actions (`createTrait`, `updateTrait`, `deleteTrait`) to fully handle relational logic.
+- [x] Automatically re-order or append new qualities globally across the platform.
+
+---
+
+## 🔒 Phase 9: Audit Logging & Security
 
 > **Goal**: Ensure the integrity of the voting process by tracking sensitive administrative and voting actions.
 

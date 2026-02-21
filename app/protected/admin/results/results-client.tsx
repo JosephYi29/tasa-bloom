@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Download, Search, AlertTriangle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function ResultsClient({ 
   data, 
@@ -130,9 +131,16 @@ export function ResultsClient({
                           {candidate.first_name} {candidate.last_name}
                         </Link>
                         {hasOutliers && (
-                          <span title="Contains outlier scores flagged by standard deviation threshold">
-                            <AlertTriangle className="w-4 h-4 text-amber-500" />
-                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help cursor-pointer">
+                                <AlertTriangle className="w-4 h-4 text-amber-500 transition-colors hover:text-amber-600" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Contains outlier scores flagged by standard deviation threshold</p>
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                       {candidate.candidate_number && (
