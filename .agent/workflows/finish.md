@@ -18,7 +18,7 @@ description: Finish the current session by updating trackers and committing code
 6. Run `git add .` to stage all the changes.
 7. Identify the current phase and versioning information from `PLANNING.md` or prompt the user if unclear.
 // turbo
-8. Run `git commit -m "[Phase {X} / v{Y.Z}] Summary of feature updates and tracker changes"` to commit the changes, replacing `{X}` and `{Y.Z}` with the appropriate phase and version constraints.
+8. Run `git commit -m "[v{Y.Z} / Phase {X}] Summary of feature updates and tracker changes"` to commit the changes, replacing `{X}` and `{Y.Z}` with the appropriate phase and version constraints.
 // turbo
 9. Run `git push` to push the committed changes to your remote repository.
 

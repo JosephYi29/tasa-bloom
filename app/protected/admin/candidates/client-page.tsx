@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Upload, GripVertical, Shuffle, SortAsc, Save, Loader2 } from "lucide-react";
-import { updateCandidateOrderAction, deleteCandidateAction, updateCandidateAction } from "./actions";
+import { updateCandidateOrderAction, deleteCandidateAction, updateCandidateAction, remapCandidateNumbersAction } from "./actions";
 import { toast } from "sonner";
 import { EditCandidateDialog } from "./edit-candidate-dialog";
 import {
@@ -233,6 +233,17 @@ export function CandidatesClient({
     toast("Sorted Alphabetically", { description: "Click Save Order to persist changes." });
   };
 
+  const handleSortNumerically = () => {
+    const sorted = [...candidates].sort((a, b) => {
+      const numA = a.candidate_number ?? 0;
+      const numB = b.candidate_number ?? 0;
+      return numA - numB;
+    });
+    setCandidates(sorted);
+    setHasChanges(true);
+    toast("Sorted Numerically", { description: "Click Save Order to persist changes." });
+  };
+
   const handleRandomize = () => {
     const shuffled = [...candidates];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -242,6 +253,28 @@ export function CandidatesClient({
     setCandidates(shuffled);
     setHasChanges(true);
     toast("Order Randomized", { description: "Click Save Order to persist changes." });
+  };
+
+  const handleRemapNumbers = async () => {
+    if (!confirm("Are you sure you want to remap ALL candidate numbers sequentially based on the current list order? This cannot be easily undone.")) return;
+    setIsSaving(true);
+    try {
+      const orderedIds = candidates.map(c => c.id);
+      const result = await remapCandidateNumbersAction(orderedIds);
+      
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Candidate numbers sequentially remapped!");
+        // Re-number locally to reflect immediately
+        setCandidates(current => current.map((c, idx) => ({ ...c, candidate_number: idx + 1, custom_order: idx + 1 })));
+        setHasChanges(false);
+      }
+    } catch {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSaveOrder = async () => {
@@ -279,11 +312,18 @@ export function CandidatesClient({
             <>
               <Button onClick={handleSortAlphabetical} variant="secondary" size="sm">
                 <SortAsc size={16} className="mr-2" />
-                Alphabetical
+                Alpha
+              </Button>
+              <Button onClick={handleSortNumerically} variant="secondary" size="sm">
+                <SortAsc size={16} className="mr-2" />
+                Numeric
               </Button>
               <Button onClick={handleRandomize} variant="secondary" size="sm">
                 <Shuffle size={16} className="mr-2" />
-                Randomize
+                Random
+              </Button>
+              <Button onClick={handleRemapNumbers} variant="destructive" size="sm" disabled={isSaving}>
+                Remap Numbers
               </Button>
             </>
           )}

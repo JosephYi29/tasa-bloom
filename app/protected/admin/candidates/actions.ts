@@ -40,6 +40,40 @@ export async function updateCandidateOrderAction(orderedIds: string[]) {
   return { success: true };
 }
 
+export async function remapCandidateNumbersAction(orderedIds: string[]) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createAdminClient();
+
+  // Shift current numbers by a large amount to avoid unique constraint violations
+  for (const id of orderedIds) {
+    const { data } = await supabase.from("candidates").select("candidate_number").eq("id", id).single();
+    if (data && data.candidate_number !== null) {
+       await supabase.from("candidates").update({ candidate_number: data.candidate_number + 100000 }).eq("id", id);
+    }
+  }
+
+  // Sequentially re-number starting from 1
+  for (let i = 0; i < orderedIds.length; i++) {
+    const { error } = await supabase
+      .from("candidates")
+      .update({ candidate_number: i + 1, custom_order: i + 1 })
+      .eq("id", orderedIds[i]);
+      
+    if (error) {
+       console.error("Failed to remap candidate number:", error);
+       return { error: "Failed to remap numbers" };
+    }
+  }
+
+  revalidatePath("/protected/admin/candidates");
+  revalidatePath("/protected/vote");
+  return { success: true };
+}
+
 export async function deleteCandidateAction(candidateId: string) {
   const user = await getCurrentUser();
   if (!user?.isAdmin) {
@@ -106,4 +140,30 @@ export async function updateCandidateAction(
   revalidatePath("/protected/admin/candidates");
   revalidatePath("/protected/vote");
   return { success: true, candidate: { id: candidateId, ...data } };
+}
+
+export async function upsertInterviewLinkAction(candidateId: string, videoUrl: string, notes: string = "") {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createAdminClient();
+
+  // Upsert the interview link based on unique candidate_id constraint defined in schema
+  const { error } = await supabase
+    .from("interview_links")
+    .upsert(
+      { candidate_id: candidateId, video_url: videoUrl, notes },
+      { onConflict: "candidate_id" }
+    );
+
+  if (error) {
+    console.error("Failed to upsert interview link:", error);
+    return { error: "Failed to save interview link" };
+  }
+
+  revalidatePath(`/protected/admin/results/${candidateId}`);
+  revalidatePath(`/protected/vote/${candidateId}/interview`);
+  return { success: true };
 }

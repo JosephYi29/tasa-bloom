@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, AlertTriangle } from "lucide-react";
 import { defaultWeights } from "@/lib/constants";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InterviewLinkForm } from "./interview-link-form";
 
 export const metadata = {
   title: "Admin | Candidate Details",
@@ -26,10 +27,10 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
   const supabase = await createAdminClient();
   const candidateId = (await params).id;
 
-  // 1. Fetch Candidate info
+  // 1. Fetch Candidate info & interview links
   const { data: candidate, error: candError } = await supabase
     .from("candidates")
-    .select("*, cohort:cohorts(term, year)")
+    .select("*, cohort:cohorts(term, year), interview_links(video_url)")
     .eq("id", candidateId)
     .single();
 
@@ -40,6 +41,10 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
       </div>
     );
   }
+
+  const existingVideoUrl = Array.isArray(candidate.interview_links) 
+    ? candidate.interview_links[0]?.video_url 
+    : (candidate.interview_links as any)?.video_url || "";
 
   // 2. Fetch Settings for Outlier Threshold
   const { data: settings } = await supabase
@@ -118,6 +123,10 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
             Candidate #{candidate.candidate_number} • {candidate.email}
           </p>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <InterviewLinkForm candidateId={candidateId} initialUrl={existingVideoUrl} />
       </div>
 
       <div className="space-y-8">
