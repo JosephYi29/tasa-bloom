@@ -181,9 +181,9 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] Admin route protection (`/protected/admin/layout.tsx` — redirects non-admins)
 - [x] Admin overview page with quick action cards
 - [x] **Candidate Detail View** (`/protected/admin/candidates/[id]`): Shows full profile, responses, and interview video.
-- [x] Manual add/edit/delete individual candidates (Include a Delete action on the candidate list table)
-- [x] Upload/link interview recordings per candidate
-- [x] Manage application questions per cohort (add, edit, reorder, delete)
+- [ ] Manual add/edit/delete individual candidates (Include a Delete action on the candidate list table)
+- [ ] Upload/link interview recordings per candidate
+- [ ] Manage application questions per cohort (add, edit, reorder, delete)
 
 ---
 
@@ -246,7 +246,7 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Slider or number input (1–10) for each question
   - [x] Optional comment box per question
   - [x] Save as draft / Submit final rating
-  - [x] Visual indicator showing which candidates the voter has already rated
+  - [ ] Visual indicator showing which candidates the voter has already rated
   - [x] **CRITICAL**: Application rating must be completely anonymous. The candidate's name and identifying details should be hidden from the voter during this phase.
 
 ### Step 3.5: Voting UI — Interview Rating ✅
@@ -264,10 +264,10 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Save / Submit
   - Note: This phase will *always* occur AFTER the Interview and Application phases, typically during an in-person group discussion. Admins will lock this phase until the earlier phases are complete.
 
-### Step 3.7: Voting Progress Tracker ✅
-- [x] Dashboard showing the voter's progress: which candidates have been rated, which are pending
-- [x] Color-coded status: ⬜ Not Started, 🟡 In Progress (drafted), ✅ Complete
-- [x] Separate progress for Application / Interview / Character
+### Step 3.7: Voting Progress Tracker
+- [ ] Dashboard showing the voter's progress: which candidates have been rated, which are pending
+- [ ] Color-coded status: ⬜ Not Started, 🟡 In Progress (drafted), ✅ Complete
+- [ ] Separate progress for Application / Interview / Character
 
 ---
 
@@ -287,8 +287,8 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] View/manage board memberships for each cohort
 - [x] Invite/add board members to a cohort, assign positions
 
-### Step 4.3: Admin — Voting Oversight ✅
-- [x] **Board Member Progress**: See which board members have completed their ratings (per category)
+### Step 4.3: Admin — Voting Oversight
+- [ ] **Board Member Progress**: See which board members have completed their ratings (per category)
 - [x] **Individual Vote Viewer**: View all scores submitted by a specific board member
 - [x] **Candidate Vote Breakdown**: View all individual scores for a specific candidate, broken down by voter
 
@@ -348,22 +348,22 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 ## 💅 Phase 6: Polish, UX & Deployment
 
-### Step 6.1: Navigation & Layout ✅
+### Step 6.1: Navigation & Layout
 - [x] Build proper app shell with sidebar navigation:
   - **Board Members**: Vote, My Progress, Profile
   - **Admins** (additional): Candidates, Results, Board Management, Cohort Settings
 - [x] `<AdminNav />` component (conditionally rendered based on `isAdmin`)
-- [x] Responsive design for tablet/mobile use during character eval meetings
+- [ ] Responsive design for tablet/mobile use during character eval meetings
 
 ### Step 6.2: User Onboarding ✅
 - [x] Profile setup flow on first login (name, grad year)
 - [x] Welcome page explaining the voting process
 - [x] Auto-detect if user has a board membership for the active cohort
 
-### Step 6.3: UX Enhancements ✅
+### Step 6.3: UX Enhancements
 - [x] Toast notifications for save/submit actions
-- [x] Confirmation dialog before final submission ("Are you sure? You cannot change your scores after submitting.")
-- [x] Loading states and skeleton screens
+- [ ] Confirmation dialog before final submission ("Are you sure? You cannot change your scores after submitting.")
+- [ ] Loading states and skeleton screens
 - [x] Dark mode support (already have `next-themes` installed)
 
 ### Step 6.4: Deployment
