@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
 import { revalidatePath } from "next/cache";
 
@@ -8,7 +8,7 @@ export async function addBoardMember(profileId: string, positionId: string) {
   const user = await getCurrentUser();
   if (!user?.isAdmin) throw new Error("Unauthorized");
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   const { data: activeCohort } = await supabase
     .from("cohorts")
@@ -49,7 +49,7 @@ export async function removeBoardMember(userId: string) {
   if (!user?.isAdmin) throw new Error("Unauthorized");
   if (user.id === userId) throw new Error("Cannot remove yourself.");
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   const { data: activeCohort } = await supabase
     .from("cohorts")

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import { BoardList } from "./board-list";
@@ -11,7 +11,7 @@ export default async function AdminBoardPage() {
   const user = await getCurrentUser();
   if (!user?.isAdmin) redirect("/protected");
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   // Get active cohort
   const { data: activeCohort } = await supabase
