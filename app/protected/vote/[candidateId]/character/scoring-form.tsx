@@ -118,6 +118,29 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
         <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={saving || !isVotingOpen}>
           {saving ? "Saving..." : "Submit Final Rating"}
         </Button>
+        <div className="mt-3">
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full text-muted-foreground hover:text-foreground"
+            onClick={(e) => {
+              e.preventDefault();
+              if (saving || !isVotingOpen) return;
+              if (confirm("Are you sure you want to Abstain? This will mark your evaluation as Complete but will NOT factor any scores into this candidate's average.")) {
+                 setScores({});
+                 setResult(null);
+                 setSaving(true);
+                 submitScores(candidateId, cohortId, "character", [], true)
+                   .then(() => setResult({ type: "success", msg: "Successfully abstained from character evaluation." }))
+                   .catch((err) => setResult({ type: "error", msg: err instanceof Error ? err.message : "Failed to abstain." }))
+                   .finally(() => setSaving(false));
+              }
+            }}
+            disabled={saving || !isVotingOpen}
+          >
+            Abstain from Evaluation
+          </Button>
+        </div>
         {!isVotingOpen && (
           <p className="text-xs text-center text-destructive mt-3">Voting is closed.</p>
         )}

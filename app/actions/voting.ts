@@ -54,6 +54,7 @@ export async function submitScores(
   }
 
   // 2. Insert or update the ranking scores
+  // If scores is empty (Abstain), we still want to clear the old scores so it formally registers as a 0-score ballot.
   const scoreUpserts = scores.map((s) => ({
     rating_id: ratingId,
     ...(isTrait ? { trait_id: s.id } : { question_id: s.id }),
@@ -73,12 +74,14 @@ export async function submitScores(
     await supabase.from("rating_scores").delete().eq("rating_id", ratingId).not("question_id", "is", null);
   }
 
-  const { error: scoreErr } = await supabase
-    .from("rating_scores")
-    .insert(scoreUpserts);
+  if (scoreUpserts.length > 0) {
+    const { error: scoreErr } = await supabase
+      .from("rating_scores")
+      .insert(scoreUpserts);
 
-  if (scoreErr) {
-    throw new Error(`Failed to save scores: ${scoreErr.message}`);
+    if (scoreErr) {
+      throw new Error(`Failed to save scores: ${scoreErr.message}`);
+    }
   }
 
   // Revalidate the voting hub

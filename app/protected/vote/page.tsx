@@ -46,7 +46,22 @@ export default async function VoteHubPage() {
   }
 
   const getStatusIndicator = (candidateRatings: { rating_type: string }[], type: string) => {
-    return candidateRatings.some((r) => r.rating_type === type) ? "✅" : "⬜";
+    return candidateRatings.some((r) => r.rating_type === type) ? (
+        <span className="flex items-center gap-1.5 text-green-600 dark:text-green-500 font-medium">
+            <span className="h-2 w-2 rounded-full bg-green-500"></span>Complete
+        </span>
+    ) : (
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="h-2 w-2 rounded-full border border-current"></span>Pending
+        </span>
+    );
+  };
+
+  const getOverallStatusColor = (c: typeof candidates[0]) => {
+    const ratingsCount = c.ratings?.length || 0;
+    if (ratingsCount === 3) return "border-green-500/50 dark:border-green-500/30 bg-green-50/50 dark:bg-green-950/10";
+    if (ratingsCount > 0) return "border-yellow-500/50 dark:border-yellow-500/30 bg-yellow-50/50 dark:bg-yellow-950/10";
+    return "";
   };
 
   return (
@@ -78,12 +93,15 @@ export default async function VoteHubPage() {
             return (
               <div
                 key={c.id}
-                className="rounded-lg border border-border bg-card p-5 hover:border-primary/50 transition-colors flex flex-col"
+                className={`rounded-lg border p-5 transition-colors flex flex-col ${getOverallStatusColor(c)} hover:border-primary/50`}
               >
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-muted-foreground tracking-wider uppercase">
-                      Candidate #{c.candidate_number}
+                    <span className="text-xs font-semibold text-muted-foreground tracking-wider uppercase flex items-center gap-2">
+                       Candidate #{c.candidate_number}
+                       {c.ratings?.length === 3 && (
+                         <span title="Completed" className="text-green-500">✓</span>
+                       )}
                     </span>
                   </div>
                   <h3 className="text-lg font-bold">
@@ -95,18 +113,18 @@ export default async function VoteHubPage() {
                   </h3>
                 </div>
 
-                <div className="space-y-2 mb-6 text-sm">
+                <div className="space-y-2 mb-6 text-sm flex-1">
                   <div className="flex items-center justify-between">
                     <span>Application</span>
-                    <span>{hasApp}</span>
+                    {hasApp}
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Interview</span>
-                    <span>{hasInt}</span>
+                    {hasInt}
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Character</span>
-                    <span>{hasChar}</span>
+                    {hasChar}
                   </div>
                 </div>
 
