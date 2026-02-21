@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Users, Upload, Settings } from "lucide-react";
+import { BoardMemberProgress } from "./board-member-progress";
 
 export default async function AdminOverviewPage() {
   const user = await getCurrentUser();
@@ -80,6 +81,10 @@ export default async function AdminOverviewPage() {
           </div>
         </Link>
       </div>
+
+      {activeCohort && (
+        <BoardMemberProgress cohortId={activeCohort.id} candidateCount={candidateCount} />
+      )}
 
       {!activeCohort && (
         <div className="rounded-lg border border-dashed border-destructive/50 bg-destructive/5 p-6 text-center">
