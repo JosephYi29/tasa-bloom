@@ -3,9 +3,20 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Upload, GripVertical, Shuffle, SortAsc, Save, Loader2 } from "lucide-react";
-import { updateCandidateOrderAction } from "./actions";
+import { Upload, GripVertical, Shuffle, SortAsc, Save, Loader2, Trash2, Edit } from "lucide-react";
+import { updateCandidateOrderAction, deleteCandidateAction, updateCandidateAction } from "./actions";
 import { toast } from "sonner";
+import { EditCandidateDialog } from "./edit-candidate-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DndContext,
   closestCenter,
@@ -36,7 +47,17 @@ type CandidateType = {
 
 // Sub-component for individual sortable row
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function SortableCandidateRow({ candidate, index }: { candidate: CandidateType; index: number }) {
+function SortableCandidateRow({ 
+  candidate, 
+  index,
+  onEdit,
+  onDelete
+}: { 
+  candidate: CandidateType; 
+  index: number;
+  onEdit: (candidate: CandidateType) => void;
+  onDelete: (candidate: CandidateType) => void;
+}) {
   const {
     attributes,
     listeners,
@@ -83,7 +104,7 @@ function SortableCandidateRow({ candidate, index }: { candidate: CandidateType; 
         {candidate.year ?? "—"}
       </td>
       <td className="px-4 py-3 text-right">
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 items-center">
           <Link
             href={`/protected/admin/candidates/${candidate.id}`}
             className="text-sm text-primary hover:underline"
@@ -91,9 +112,16 @@ function SortableCandidateRow({ candidate, index }: { candidate: CandidateType; 
             View
           </Link>
           <button 
-            className="text-sm text-destructive hover:underline opacity-50 cursor-not-allowed" 
-            title="Delete functionality overriden by direct Supabase DB management for now."
-            disabled={true}
+            onClick={() => onEdit(candidate)}
+            className="text-sm text-foreground hover:underline" 
+            title="Edit Candidate"
+          >
+            Edit
+          </button>
+          <button 
+            onClick={() => onDelete(candidate)}
+            className="text-sm text-destructive hover:underline" 
+            title="Delete Candidate"
           >
             Delete
           </button>
@@ -113,6 +141,14 @@ export function CandidatesClient({
   const [candidates, setCandidates] = useState<CandidateType[]>(initialCandidates);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const [editingCandidate, setEditingCandidate] = useState<CandidateType | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditSaving, setIsEditSaving] = useState(false);
+
+  const [deletingCandidate, setDeletingCandidate] = useState<CandidateType | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleteSaving, setIsDeleteSaving] = useState(false);
 
   // Sync if initial props change (e.g. on navigation)
   useEffect(() => {
@@ -140,6 +176,54 @@ export function CandidatesClient({
       setHasChanges(true);
     }
   }
+
+  const handleEditCandidate = (candidate: CandidateType) => {
+    setEditingCandidate(candidate);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteCandidate = (candidate: CandidateType) => {
+    setDeletingCandidate(candidate);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const onSaveEdit = async (id: string, data: Partial<CandidateType>) => {
+    setIsEditSaving(true);
+    try {
+      const result = await updateCandidateAction(id, data);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Candidate updated successfully!");
+        setCandidates(current => current.map(c => c.id === id ? { ...c, ...data } : c));
+        setIsEditModalOpen(false);
+      }
+    } catch {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setIsEditSaving(false);
+    }
+  };
+
+  const onConfirmDelete = async () => {
+    if (!deletingCandidate) return;
+    setIsDeleteSaving(true);
+    try {
+      const result = await deleteCandidateAction(deletingCandidate.id);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Candidate deleted successfully!");
+        setCandidates(current => current.filter(c => c.id !== deletingCandidate.id));
+        setIsDeleteDialogOpen(false);
+      }
+    } catch {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setIsDeleteSaving(false);
+      setDeletingCandidate(null);
+    }
+  };
 
   const handleSortAlphabetical = () => {
     const sorted = [...candidates].sort((a, b) => {
@@ -275,7 +359,13 @@ export function CandidatesClient({
                   strategy={verticalListSortingStrategy}
                 >
                   {candidates.map((c, idx) => (
-                    <SortableCandidateRow key={c.id} candidate={c} index={idx} />
+                    <SortableCandidateRow 
+                      key={c.id} 
+                      candidate={c} 
+                      index={idx} 
+                      onEdit={handleEditCandidate} 
+                      onDelete={handleDeleteCandidate} 
+                    />
                   ))}
                 </SortableContext>
               </tbody>
@@ -287,6 +377,43 @@ export function CandidatesClient({
           </div>
         </div>
       )}
+
+      {/* Modals outside of table flow */}
+      <EditCandidateDialog 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        candidate={editingCandidate}
+        onSave={onSaveEdit}
+        isSaving={isEditSaving}
+      />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete candidate
+              {" "} <span className="font-semibold text-foreground">{deletingCandidate?.first_name} {deletingCandidate?.last_name}</span>{" "}
+              and remove all of their application responses, interview links, and submitted votes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleteSaving} onClick={() => setDeletingCandidate(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                onConfirmDelete();
+              }}
+              disabled={isDeleteSaving} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleteSaving ? "Deleting..." : "Delete Candidate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

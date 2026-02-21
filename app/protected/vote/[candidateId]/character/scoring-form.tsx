@@ -4,6 +4,16 @@ import { useState } from "react";
 import { submitScores } from "@/app/actions/voting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CharacterFormProps {
   candidateId: string;
@@ -17,6 +27,7 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
   const [scores, setScores] = useState<Record<string, number>>(initialScores);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleScoreChange = (tId: string, val: string) => {
     const num = parseFloat(val);
@@ -29,7 +40,7 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInitialSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (saving || !isVotingOpen) return;
 
@@ -40,6 +51,12 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
       return;
     }
 
+    setResult(null);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmedSubmit = async () => {
+    setShowConfirm(false);
     setSaving(true);
     setResult(null);
 
@@ -58,7 +75,8 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
   if (traits.length === 0) return null;
 
   return (
-    <form onSubmit={handleSubmit} className="border border-border rounded-lg bg-card p-6 shadow-sm max-w-xl mx-auto space-y-8">
+    <>
+      <form onSubmit={handleInitialSubmit} className="border border-border rounded-lg bg-card p-6 shadow-sm max-w-xl mx-auto space-y-8">
       <div>
         <h3 className="font-semibold text-lg">Character Evaluations</h3>
         <p className="text-sm text-muted-foreground mt-1">Rate the candidate from 1-10 on the following traits.</p>
@@ -97,13 +115,36 @@ export function CharacterScoringForm({ candidateId, cohortId, traits, initialSco
       )}
 
       <div>
-        <Button type="submit" className="w-full" disabled={saving || !isVotingOpen}>
-          {saving ? "Saving..." : "Save Character Scores"}
+        <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={saving || !isVotingOpen}>
+          {saving ? "Saving..." : "Submit Final Rating"}
         </Button>
         {!isVotingOpen && (
           <p className="text-xs text-center text-destructive mt-3">Voting is closed.</p>
         )}
       </div>
     </form>
+    
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to submit your final character scores for this candidate. 
+              {" "} <strong className="text-foreground">Once submitted, these scores are final and cannot be modified.</strong> {" "}
+              Do you wish to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => {
+              e.preventDefault();
+              handleConfirmedSubmit();
+            }} disabled={saving}>
+              Confirm Submission
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

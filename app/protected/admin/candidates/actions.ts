@@ -39,3 +39,71 @@ export async function updateCandidateOrderAction(orderedIds: string[]) {
   revalidatePath("/protected/vote");
   return { success: true };
 }
+
+export async function deleteCandidateAction(candidateId: string) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createAdminClient();
+  
+  const { error } = await supabase
+    .from("candidates")
+    .delete()
+    .eq("id", candidateId);
+
+  if (error) {
+    console.error("Failed to delete candidate:", error);
+    return { error: "Failed to delete candidate" };
+  }
+
+  revalidatePath("/protected/admin/candidates");
+  revalidatePath("/protected/vote");
+  return { success: true };
+}
+
+export async function updateCandidateAction(
+  candidateId: string,
+  data: {
+    first_name?: string;
+    last_name?: string;
+    candidate_number?: number | null;
+    email?: string | null;
+    year?: string | null;
+  }
+) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createAdminClient();
+
+  // If candidate_number is being updated to a non-null value, we might want to ensure uniqueness
+  // However, DB constraints will catch it if it's strictly enforced per cohort.
+  // Assuming the DB handles duplicate candidate_number within a cohort gracefully (or errors appropriately).
+
+  const { error } = await supabase
+    .from("candidates")
+    .update({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      candidate_number: data.candidate_number,
+      email: data.email,
+      year: data.year,
+    })
+    .eq("id", candidateId);
+
+  if (error) {
+    console.error("Failed to update candidate:", error);
+    if (error.code === '23505') { // Postgres unique violation code
+       return { error: "A candidate with this number already exists" };
+    }
+    return { error: "Failed to update candidate" };
+  }
+
+  revalidatePath("/protected/admin/candidates");
+  revalidatePath("/protected/vote");
+  return { success: true, candidate: { id: candidateId, ...data } };
+}

@@ -4,6 +4,16 @@ import { useState } from "react";
 import { submitScores } from "@/app/actions/voting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ScoringFormProps {
   candidateId: string;
@@ -11,12 +21,14 @@ interface ScoringFormProps {
   questions: { id: string; text: string }[];
   initialScores: Record<string, number>;
   isVotingOpen?: boolean;
+  ratingType?: "application" | "interview";
 }
 
-export function ApplicationScoringForm({ candidateId, cohortId, questions, initialScores, isVotingOpen = true }: ScoringFormProps) {
+export function ApplicationScoringForm({ candidateId, cohortId, questions, initialScores, isVotingOpen = true, ratingType = "application" }: ScoringFormProps) {
   const [scores, setScores] = useState<Record<string, number>>(initialScores);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleScoreChange = (qId: string, val: string) => {
     const num = parseFloat(val);
@@ -29,7 +41,7 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInitialSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (saving || !isVotingOpen) return;
 
@@ -40,12 +52,18 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
       return;
     }
 
+    setResult(null);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmedSubmit = async () => {
+    setShowConfirm(false);
     setSaving(true);
     setResult(null);
 
     try {
       const scoreArr = Object.entries(scores).map(([id, score]) => ({ id, score }));
-      await submitScores(candidateId, cohortId, "application", scoreArr, false);
+      await submitScores(candidateId, cohortId, ratingType, scoreArr, false);
       setResult({ type: "success", msg: "Scores saved successfully!" });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save scores.";
@@ -58,7 +76,8 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
   if (questions.length === 0) return null;
 
   return (
-    <form onSubmit={handleSubmit} className="border border-border rounded-lg bg-card p-5 space-y-6 shadow-sm">
+    <>
+      <form onSubmit={handleInitialSubmit} className="border border-border rounded-lg bg-card p-5 space-y-6 shadow-sm">
       <h3 className="font-semibold text-lg border-b border-border pb-3">Your Scores</h3>
       
       <div className="space-y-4">
@@ -94,9 +113,32 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={saving}>
-        {saving ? "Saving..." : "Save Scores"}
+      <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={saving || !isVotingOpen}>
+        {saving ? "Saving..." : "Submit Final Rating"}
       </Button>
     </form>
+
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to submit your final scores for this candidate's {ratingType}. 
+              {" "} <strong className="text-foreground">Once submitted, these scores are final and cannot be modified.</strong> {" "}
+              Do you wish to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => {
+              e.preventDefault();
+              handleConfirmedSubmit();
+            }} disabled={saving}>
+              Confirm Submission
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

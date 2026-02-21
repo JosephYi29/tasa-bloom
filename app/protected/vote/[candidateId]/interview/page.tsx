@@ -192,6 +192,7 @@ export default async function CandidateInterviewPage({
               questions={mappedQuestions}
               initialScores={existingScores}
               isVotingOpen={isVotingOpen}
+              ratingType="interview"
             />
           ) : (
             <div className="border border-border border-dashed rounded-lg bg-card p-5 text-center text-muted-foreground text-sm">

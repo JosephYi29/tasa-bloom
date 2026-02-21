@@ -38,6 +38,8 @@ Now, test importing a Google Form export.
    * Verify the "Interview Video Link" mapped to `Interview Video Link`.
 5. Click **Preview Import**, then **Import Candidates**.
 6. Check the **Candidates** sidebar tab to see Jane and John listed!
+7. **Test Editing a Candidate:** Click **Edit** next to Jane's name. Change her "Year" to `2027` and save. The UI should instantly reflect this change.
+8. **Test Deleting a Candidate:** Click **Delete** next to John's name. Follow the red destructive prompts to confirm. He should disappear from the candidate grid!
 
 ## 4. Test the Voting System (Board Member)
 Now, experience the app as a voter.
@@ -46,13 +48,15 @@ Now, experience the app as a voter.
 2. You should see cards for Jane Doe and John Smith. The status indicators (App, Interview, Character) should all be ⬜ (Not Started).
 3. **Test Application Rating:** Click the **App** button for Jane.
    * You should see her answer to "Why do you want to join TASA?".
-   * Enter a score (1-10) on the right. Hit **Save Scores**.
+   * Enter a score (1-10) on the right. Hit **Submit Final Rating**.
+   * **Test Submission Lock:** An "Are you sure?" modal should appear preventing immediate submission. Click cancel, verify no changes happened. Click submit again, confirm, and verify the scores save!
 4. **Test Interview Rating:** Go back to the Voting Hub. The "App" indicator for Jane should now be ✅. Click **Interview**.
    * If you passed a valid google drive link (like the dummy CSV above), you will see an embedded video player.
    * Note: The embed only works if the Google Drive link is accessible/public.
+   * Give a score and trigger the submission confirmation modal.
 5. **Test Character Rating:** Go back to the Hub, click **Character** for Jane.
    * You should see the traits you added to the database in Step 2.
-   * Rate them 1-10 and hit **Save**.
+   * Rate them 1-10, trigger the submission modal, and hit **Confirm Submission**.
 
 ## 5. Verify Database State
 To confirm everything worked end-to-end:
