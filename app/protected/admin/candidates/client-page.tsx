@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Upload, GripVertical, Shuffle, SortAsc, Save, Loader2, Trash2, Edit } from "lucide-react";
+import { Upload, GripVertical, Shuffle, SortAsc, Save, Loader2 } from "lucide-react";
 import { updateCandidateOrderAction, deleteCandidateAction, updateCandidateAction } from "./actions";
 import { toast } from "sonner";
 import { EditCandidateDialog } from "./edit-candidate-dialog";
@@ -46,15 +46,12 @@ type CandidateType = {
 };
 
 // Sub-component for individual sortable row
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function SortableCandidateRow({ 
   candidate, 
-  index,
   onEdit,
   onDelete
 }: { 
   candidate: CandidateType; 
-  index: number;
   onEdit: (candidate: CandidateType) => void;
   onDelete: (candidate: CandidateType) => void;
 }) {
@@ -358,11 +355,10 @@ export function CandidatesClient({
                   items={candidates.map(c => c.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {candidates.map((c, idx) => (
+                  {candidates.map((c) => (
                     <SortableCandidateRow 
                       key={c.id} 
                       candidate={c} 
-                      index={idx} 
                       onEdit={handleEditCandidate} 
                       onDelete={handleDeleteCandidate} 
                     />

@@ -181,7 +181,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] Admin route protection (`/protected/admin/layout.tsx` — redirects non-admins)
 - [x] Admin overview page with quick action cards
 - [x] **Candidate Detail View** (`/protected/admin/candidates/[id]`): Shows full profile, responses, and interview video.
-- [ ] Manual add/edit/delete individual candidates (Include a Delete action on the candidate list table)
+- [x] Manual add/edit/delete individual candidates (Include Edit modal and Delete confirmation on the candidate list table)
 - [ ] Upload/link interview recordings per candidate
 - [ ] Manage application questions per cohort (add, edit, reorder, delete)
 
@@ -245,7 +245,7 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Display each application question alongside the candidate's response
   - [x] Slider or number input (1–10) for each question
   - [x] Optional comment box per question
-  - [x] Save as draft / Submit final rating
+  - [x] Save as draft / Submit final rating (with AlertDialog confirmation)
   - [ ] Visual indicator showing which candidates the voter has already rated
   - [x] **CRITICAL**: Application rating must be completely anonymous. The candidate's name and identifying details should be hidden from the voter during this phase.
 
@@ -254,14 +254,14 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Embedded video player or link to Google Drive recording
   - [x] Display interview questions alongside rating inputs (1–10)
   - [x] Optional comment box per question
-  - [x] Save / Submit
+  - [x] Save / Submit final rating (with AlertDialog confirmation)
 
 ### Step 3.6: Voting UI — Character Evaluation ✅
 - [x] **Character Evaluation View** (`/vote/[candidateId]/character`):
   - [x] Display character traits (Overall Character, Drive, Logistical Abilities, etc.)
   - [x] Score input (1–10) per trait
   - [x] Optional comment per trait
-  - [x] Save / Submit
+  - [x] Save / Submit final rating (with AlertDialog confirmation)
   - Note: This phase will *always* occur AFTER the Interview and Application phases, typically during an in-person group discussion. Admins will lock this phase until the earlier phases are complete.
 
 ### Step 3.7: Voting Progress Tracker
@@ -362,7 +362,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 ### Step 6.3: UX Enhancements
 - [x] Toast notifications for save/submit actions
-- [ ] Confirmation dialog before final submission ("Are you sure? You cannot change your scores after submitting.")
+- [x] Confirmation dialog before final submission ("Are you sure? Once submitted, you cannot edit these scores.")
 - [ ] Loading states and skeleton screens
 - [x] Dark mode support (already have `next-themes` installed)
 

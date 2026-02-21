@@ -123,7 +123,7 @@ export function ApplicationScoringForm({ candidateId, cohortId, questions, initi
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to submit your final scores for this candidate's {ratingType}. 
+              You are about to submit your final scores for this candidate&apos;s {ratingType}. 
               {" "} <strong className="text-foreground">Once submitted, these scores are final and cannot be modified.</strong> {" "}
               Do you wish to proceed?
             </AlertDialogDescription>
