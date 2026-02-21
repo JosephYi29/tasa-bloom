@@ -44,6 +44,7 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
 
   const existingVideoUrl = Array.isArray(candidate.interview_links) 
     ? candidate.interview_links[0]?.video_url 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     : (candidate.interview_links as any)?.video_url || "";
 
   // 2. Fetch Settings for Outlier Threshold
