@@ -378,6 +378,32 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 ---
 
+## 🏛️ Phase 7: Legacy Historical Data Import
+
+> **Goal**: Allow administrators to import and preserve raw application, interview, and character voting records from previous cohorts where the original board members will never register on the platform.
+
+### Step 7.1: Database Schema Modifications (Legacy Support)
+- [ ] **Nullable `voter_id`**: Update the `ratings` table to drop the `NOT NULL` constraint on `voter_id` (a foreign key to `auth.users`).
+- [ ] **Add `legacy_voter_alias`**: Add a new `TEXT` column to the `ratings` table.
+  - *Logic*: For modern votes, `voter_id` is set, and `legacy_voter_alias` is null. For imported historical votes, `voter_id` is null, and `legacy_voter_alias` stores the string name of the previous board member (e.g., "Jane Smith").
+
+### Step 7.2: Legacy Data Import UI
+- [ ] Create `/protected/admin/import/legacy` route exclusively for admins.
+- [ ] **CSV Uploader**: Drag-and-drop component specifically designed for historical ratings data.
+- [ ] **Schema Requirements**: The uploaded spreadsheet dictates the target Cohort Term/Year, Candidate Name, Voting Category, Question/Trait, Score, optional Comment, and the string-based Voter Name.
+
+### Step 7.3: Import Execution Engine
+- [ ] **Idempotent Pre-processing**: 
+  - Ensure the target historical cohort exists (create if not).
+  - Ensure the historically referenced candidates exist (create if not).
+- [ ] **Bulk Insertion**: Map the CSV rows and execute a bulk insert into `ratings` (setting `voter_id = NULL` and passing `legacy_voter_alias`) and their child `rating_scores` rows. Bypasses standard active-cohort constraints.
+
+### Step 7.4: Results Engine Compatibility
+- [ ] Ensure the existing `lib/scoring.ts` logic safely calculates candidate averages when a rating's `voter_id` is null.
+- [ ] Update frontend Admin views (like the future per-voter breakdowns on the Details page) to seamlessly fall back to displaying the `legacy_voter_alias` when `voter_id` is missing.
+
+---
+
 ## 📐 Database Schema Summary (All Phases)
 
 ```
@@ -454,6 +480,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 | 6 | 4.1–4.4 | Admin dashboard (oversight, lock/unlock phases) | Step 5 |
 | 7 | 5.1–5.3 | Analytics engine, leaderboard, CSV export | Step 6 |
 | 8 | 6.1–6.4 | Polish, responsive design, deploy | Step 7 |
+| 9 | 7.1-7.4 | Legacy data import schema, UI, and algorithms | Step 8 |
 
 ---
 
