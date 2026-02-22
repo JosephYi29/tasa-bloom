@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Papa from "papaparse";
+import Link from "next/link";
 import { importCandidates } from "@/app/actions/cohorts";
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet, Check, AlertCircle, Loader2 } from "lucide-react";
@@ -387,7 +388,7 @@ export function CsvImporter({ cohortId, cohortLabel }: CsvImporterProps) {
           Import More
         </Button>
         <Button asChild>
-          <a href="/protected/admin/candidates">View Candidates</a>
+          <Link href="/protected/admin/candidates">View Candidates</Link>
         </Button>
       </div>
     </div>
