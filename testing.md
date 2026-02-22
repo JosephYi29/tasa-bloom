@@ -142,3 +142,37 @@ As an admin, you can toggle individual board members as available/unavailable. U
 5. **Verify Oversight Exclusion:** Go to **Oversight** in the Admin sidebar. The unavailable member should NOT have a progress card.
 6. **Re-enable:** Go back to **Board Members** and flip the toggle back to "Yes". The member should reappear in voting progress views.
 
+## 12. Test Question Scorable Toggle (Feature)
+Admins can mark application/interview questions as non-scorable (info-only) so they don't appear during voting.
+
+1. As an admin, go to **Settings** → **Application Questions**.
+2. Each question row should have a **Score** toggle switch on the right.
+3. **Toggle Off:** Flip the toggle off for an info-only question (e.g., "What extracurriculars are you in?"). The row should dim and show an **"Info Only"** badge.
+4. **Verify Voting View:** As a voter, open a candidate's Application rating page. The non-scorable question should be **completely hidden** — no response text, no score input.
+5. **Verify Interview Tab:** Switch to the Interview tab in Settings and repeat. Non-scorable interview questions should also be hidden from the Interview voting page.
+6. **Re-enable:** Toggle the question back on. It should reappear in the voting view with a score input.
+
+## 13. Test Legacy Import Question Mapping (Feature)
+When importing legacy voting data, admins can map each score column to an existing question or trait instead of auto-creating new ones.
+
+1. As an admin, go to **Import Candidates**.
+2. Scroll to **Historical Voting Data** section. Select a rating phase (Application/Interview/Character).
+3. Upload a legacy CSV file with score columns.
+4. On the mapping screen, a **4th column** labeled "Question" (or "Trait") should appear.
+5. For columns mapped as "Score Question (1-10)", a **dropdown** should show all existing questions/traits for that phase.
+6. **Map to Existing:** Select an existing question from the dropdown for each score column. A banner should indicate how many existing items were found.
+7. **Create New:** Leave the dropdown on "— Create New —" if no matching question exists. It will create a new question from the CSV header.
+8. **Preview:** Click "Preview Import". The summary should show how many are "mapped to existing" vs "will create new".
+9. **Import:** Complete the import. Go to **Settings** → **Application Questions** and verify no duplicate questions were created.
+
+## 14. Test Results Consistency Column (Feature)
+The voting results page now shows a "Consistency" percentage instead of a triangle for every candidate.
+
+1. As an admin, go to **Results**.
+2. A new **Consistency** column should appear as the last column.
+3. Hover the "Consistency" header — a tooltip should explain it shows the percentage of scores within normal range.
+4. Candidates with high consistency (≥80%) should show the percentage in muted text with **no warning icon**.
+5. Candidates with low consistency (<80%) should show an **amber ⚠️ triangle** + amber percentage text.
+6. Hover the triangle on a low-consistency row — it should show "X of Y scores flagged as outliers".
+7. Click a candidate to view their detail page — the outlier count should **match** the consistency percentage on the list page.
+8. **Export CSV:** Click "Export CSV". The downloaded file should include a "Consistency %" column.
