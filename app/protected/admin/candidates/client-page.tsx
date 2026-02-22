@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Upload, GripVertical, Shuffle, SortAsc, Save, Loader2, Eye, EyeOff } from "lucide-react";
@@ -151,6 +151,7 @@ export function CandidatesClient({
   initialCandidates: CandidateType[], 
   activeCohort: { id: string, term: string, year: number } | null 
 }) {
+  const dndId = useId();
   const [candidates, setCandidates] = useState<CandidateType[]>(initialCandidates);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -436,6 +437,7 @@ export function CandidatesClient({
             </thead>
             
             <DndContext 
+              id={dndId}
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
