@@ -45,8 +45,6 @@ export async function saveWeightsAction(formData: FormData) {
     return { error: error.message };
   }
 
-  revalidatePath("/protected/admin/settings");
-  revalidatePath("/protected/admin/settings/weights");
   revalidatePath("/protected/admin/results");
   return { success: true };
 }

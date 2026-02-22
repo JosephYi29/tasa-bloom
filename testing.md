@@ -78,7 +78,7 @@ Let's verify the admin oversight and cohort management tools.
 8. **Board Management:** Click the **Board Members** tab in the Admin sidebar.
    * Add a registered user (e.g., yourself or a dummy account) to the board for the active cohort, assigning them a position (e.g., "President").
    * Verify they appear in the list.
-9. **Test Application Questions:** Click **Settings** > **Application Questions**. Add new sample questions for the Application and Interview tabs. Verify they show up on the Voting Hub when rating candidates.
+9. **Test Application Questions:** Click **Evaluation** in the Admin sidebar. You should see three tabs: Application, Interview, and Character Traits. Add new sample questions for the Application and Interview tabs. Verify they show up on the Voting Hub when rating candidates.
 10. **Oversight Dashboard:** Click **Overview** in the Admin sidebar.
    * You should see a progress tracking table for all board members in the active cohort.
    * If you submitted scores in Step 4, your counts should reflect the number of candidates you've rated versus the total number of candidates in the active cohort (color coded yellow or green).
@@ -86,12 +86,12 @@ Let's verify the admin oversight and cohort management tools.
 ## 7. Test Scoring & Results Analytics (Phase 5)
 Now, let's verify the automatic scoring engine and export features.
 
-1. As an admin, click **Settings** in the Admin sidebar.
-2. Under Settings, select the **Scoring Weights** card.
+1. As an admin, click **Results** in the Admin sidebar.
+2. You should see two tabs: **Leaderboard** and **Scoring Config**. Click the **Scoring Config** tab.
 3. Test out the validation format by making the numbers sum to anything other than 100%, and notice that saving is disabled or presents an error.
 4. Set the weights to **Application (40%)**, **Interview (35%)**, and **Character (25%)** or to your desired levels and hit **Save Settings**.
 5. Set your **Outlier Threshold** (default is 2.0). 
-6. Navigate to the **Results** tab in the Admin sidebar. 
+6. Click the **Leaderboard** tab.
 7. Here you will see the full ranked list of candidates by their **Composite Score**. You can view how they scored via their categorized averages.
 8. Click into any Candidate's name to view their **Candidate Details**. Look at the breakdowns for Application, Interview, and Character ratings. Notice how standard deviations inform the Adjusted Average to avoid extreme feedback outliers!
 9. Back in the Results page, hit the **Export CSV** to safely download the results locally onto your computer in the `.csv` format.
@@ -145,12 +145,13 @@ As an admin, you can toggle individual board members as available/unavailable. U
 ## 12. Test Question Scorable Toggle (Feature)
 Admins can mark application/interview questions as non-scorable (info-only) so they don't appear during voting.
 
-1. As an admin, go to **Settings** → **Application Questions**.
-2. Each question row should have a **Score** toggle switch on the right.
-3. **Toggle Off:** Flip the toggle off for an info-only question (e.g., "What extracurriculars are you in?"). The row should dim and show an **"Info Only"** badge.
-4. **Verify Voting View:** As a voter, open a candidate's Application rating page. The non-scorable question should be **completely hidden** — no response text, no score input.
-5. **Verify Interview Tab:** Switch to the Interview tab in Settings and repeat. Non-scorable interview questions should also be hidden from the Interview voting page.
-6. **Re-enable:** Toggle the question back on. It should reappear in the voting view with a score input.
+1. As an admin, go to **Evaluation** in the Admin sidebar.
+2. Click the **Application** or **Interview** tab.
+3. Each question row should have a **Score** toggle switch on the right.
+4. **Toggle Off:** Flip the toggle off for an info-only question (e.g., "What extracurriculars are you in?"). The row should dim and show an **"Info Only"** badge.
+5. **Verify Voting View:** As a voter, open a candidate's Application rating page. The non-scorable question should be **completely hidden** — no response text, no score input.
+6. **Verify Interview Tab:** Switch to the Interview tab in Evaluation and repeat. Non-scorable interview questions should also be hidden from the Interview voting page.
+7. **Re-enable:** Toggle the question back on. It should reappear in the voting view with a score input.
 
 ## 13. Test Legacy Import Question Mapping (Feature)
 When importing legacy voting data, admins can map each score column to an existing question or trait instead of auto-creating new ones.
@@ -163,7 +164,7 @@ When importing legacy voting data, admins can map each score column to an existi
 6. **Map to Existing:** Select an existing question from the dropdown for each score column. A banner should indicate how many existing items were found.
 7. **Create New:** Leave the dropdown on "— Create New —" if no matching question exists. It will create a new question from the CSV header.
 8. **Preview:** Click "Preview Import". The summary should show how many are "mapped to existing" vs "will create new".
-9. **Import:** Complete the import. Go to **Settings** → **Application Questions** and verify no duplicate questions were created.
+9. **Import:** Complete the import. Go to **Evaluation** → **Application** tab and verify no duplicate questions were created.
 
 ## 14. Test Results Consistency Column (Feature)
 The voting results page now shows a "Consistency" percentage instead of a triangle for every candidate.

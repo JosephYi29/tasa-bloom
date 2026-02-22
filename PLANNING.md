@@ -228,7 +228,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 | `trait_name` | TEXT | e.g., "Overall Character", "Drive", "Logistical Abilities" |
 | `trait_order` | INT | Display ordering |
 
-> **Key Requirement**: Admins can add, edit, reorder, and remove character traits per cohort via an admin UI (`/admin/settings/traits`). Default traits are seeded when a new cohort is created, but can be customized for any cycle.
+> **Key Requirement**: Admins can add, edit, reorder, and remove character traits per cohort via the Evaluation admin tab (`/admin/evaluation`). Default traits are seeded when a new cohort is created, but can be customized for any cycle.
 
 **Default seed traits**: Overall Character, Drive, Logistical Abilities (with the ability to modify as the club evolves).
 
@@ -322,7 +322,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 | `outlier_std_devs` | DECIMAL | Default 2.0 (how many σ to flag outliers) |
 | `top_n_display` | INT | Default 20 (how many top candidates to highlight) |
 
-> **Admin UI** (`/admin/settings/weights`): Admins set the exact weights for each scoring category. Weights must sum to 1.0 — the UI validates this in real-time. These settings are persisted per cohort so historical results are reproducible.
+> **Admin UI** (Results tab → "Scoring Config"): Admins set the exact weights for each scoring category. Weights must sum to 1.0 — the UI validates this in real-time. These settings are persisted per cohort so historical results are reproducible.
 
 ### Step 5.1: Scoring Engine (Server-Side)
 - [x] **Aggregation Logic** (Supabase SQL function or Next.js API route):
@@ -384,8 +384,10 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] **DndContext Hydration Fix**: Fixed React hydration mismatch on the candidates page caused by `@dnd-kit`'s `DndContext` rendering a hidden `<div>` inside a `<table>`. Moved `DndContext` to wrap the table container and added `useId()` for stable accessibility IDs.
 - [x] **Candidate Detail Page** (`/protected/admin/candidates/[id]`): Created missing candidate detail route that was causing 404 errors when clicking "View" on the candidates list. Shows basic info, application responses, interview responses, and interview video link.
 - [x] **Results Consistency Column**: Replaced per-candidate outlier triangles with a "Consistency %" column on the results page. Shows percentage of scores within normal range. Warning triangle only appears when consistency drops below 80%. Fixed outlier detection to compute per-question/trait (matching the detail page) instead of pooling all scores in a category. Added consistency to CSV export.
-- [x] **Question Scorable Toggle** (`/protected/admin/settings/questions`): Added `is_scorable` column on `application_questions` (migration `21_add_question_is_scorable.sql`). Questions can be toggled as scorable or info-only via a Switch in the question manager. Non-scorable questions are completely hidden from voters during application and interview voting.
+- [x] **Question Scorable Toggle** (`/protected/admin/evaluation` → Application/Interview tabs): Added `is_scorable` column on `application_questions` (migration `21_add_question_is_scorable.sql`). Questions can be toggled as scorable or info-only via a Switch in the question manager. Non-scorable questions are completely hidden from voters during application and interview voting.
 - [x] **Legacy Import Question Mapping**: Updated the legacy CSV importer to show a dropdown of existing questions/traits when mapping score columns, instead of always creating new ones from CSV headers. Prevents duplicate questions when imported data uses simplified column names (e.g., "Q1" vs full question text). Server action accepts explicit question ID overrides.
+- [x] **Admin Tab Restructuring**: Moved scoring weights from Settings into the Results page as a "Scoring Config" tab. Created a new top-level "Evaluation" admin tab (`/protected/admin/evaluation`) combining character traits, application questions, and interview questions in a single 3-tab layout. These are all per-cohort configs. Settings page now only contains Board Positions (which are global). Updated sidebar with new "Evaluation" link.
+- [x] **Dev Script Auto-Clean**: Updated `npm run dev` script to automatically clear stale `.next` cache before starting Turbopack, preventing build manifest errors after route changes.
 
 ---
 

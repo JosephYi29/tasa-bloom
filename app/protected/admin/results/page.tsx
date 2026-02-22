@@ -2,7 +2,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import { computeScoresForCohort } from "@/lib/scoring";
-import { ResultsClient } from "./results-client";
+import { ResultsTabs } from "./results-tabs";
+import { defaultWeights } from "@/lib/constants";
 
 export const metadata = {
   title: "Admin | Voting Results",
@@ -34,12 +35,26 @@ export default async function AdminResultsPage() {
   // Fetch and compute scores
   const results = await computeScoresForCohort(supabase, activeCohort.id);
 
-  // Get settings to know `top_n_display`
-  const { data: settings } = await supabase
+  // Get settings (weights + analytics config)
+  let { data: settings } = await supabase
     .from("cohort_settings")
-    .select("top_n_display")
+    .select("*")
     .eq("cohort_id", activeCohort.id)
     .single();
+
+  if (!settings) {
+    settings = {
+      id: "new",
+      cohort_id: activeCohort.id,
+      application_weight: defaultWeights.application_weight,
+      interview_weight: defaultWeights.interview_weight,
+      character_weight: defaultWeights.character_weight,
+      outlier_std_devs: defaultWeights.outlier_std_devs,
+      top_n_display: defaultWeights.top_n_display,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  }
 
   const topN = settings?.top_n_display ?? 20;
 
@@ -55,7 +70,12 @@ export default async function AdminResultsPage() {
         </div>
       </div>
 
-      <ResultsClient data={results} topN={topN} activeCohort={activeCohort} />
+      <ResultsTabs
+        data={results}
+        topN={topN}
+        activeCohort={activeCohort}
+        weightsSettings={settings}
+      />
     </div>
   );
 }

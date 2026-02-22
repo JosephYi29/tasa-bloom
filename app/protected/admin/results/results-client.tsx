@@ -210,7 +210,7 @@ export function ResultsClient({
       
       {topN > 0 && data.length > 0 && (
         <div className="text-sm text-muted-foreground text-right mt-2">
-          Highlighting the top {topN} candidates. <Link href="/protected/admin/settings/weights" className="underline">Change threshold</Link>.
+          Highlighting the top {topN} candidates. Adjust in the <span className="underline cursor-pointer" onClick={() => { const el = document.querySelector('[data-value="weights"]') as HTMLElement; el?.click(); }}>Scoring Config</span> tab.
         </div>
       )}
     </div>

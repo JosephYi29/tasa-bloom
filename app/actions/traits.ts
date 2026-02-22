@@ -20,7 +20,7 @@ export async function createTrait(cohortId: string, traitName: string, traitOrde
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/traits");
+  revalidatePath("/protected/admin/evaluation");
   return { success: true };
 }
 
@@ -40,7 +40,7 @@ export async function updateTrait(id: string, traitName: string, traitOrder: num
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/traits");
+  revalidatePath("/protected/admin/evaluation");
   return { success: true };
 }
 
@@ -57,6 +57,6 @@ export async function deleteTrait(id: string) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/traits");
+  revalidatePath("/protected/admin/evaluation");
   return { success: true };
 }

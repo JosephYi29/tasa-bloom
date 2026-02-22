@@ -21,7 +21,7 @@ export async function createQuestion(cohortId: string, questionText: string, cat
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/questions");
+  revalidatePath("/protected/admin/evaluation");
   return { success: true };
 }
 
@@ -41,7 +41,7 @@ export async function updateQuestion(id: string, questionText: string, questionO
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/questions");
+  revalidatePath("/protected/admin/evaluation");
   return { success: true };
 }
 
@@ -58,7 +58,7 @@ export async function deleteQuestion(id: string) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/questions");
+  revalidatePath("/protected/admin/evaluation");
   return { success: true };
 }
 
@@ -75,6 +75,6 @@ export async function toggleQuestionScorable(id: string, isScorable: boolean) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/protected/admin/settings/questions");
+  revalidatePath("/protected/admin/evaluation");
   return { success: true };
 }

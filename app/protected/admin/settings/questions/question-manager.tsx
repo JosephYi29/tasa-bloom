@@ -16,13 +16,13 @@ type Question = {
   is_scorable: boolean;
 };
 
-export function QuestionManager({ cohortId, initialQuestions }: { cohortId: string, initialQuestions: Question[] }) {
+export function QuestionManager({ cohortId, initialQuestions, category }: { cohortId: string, initialQuestions: Question[], category?: 'application' | 'interview' }) {
   const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [newQuestionText, setNewQuestionText] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [activeTab, setActiveTab] = useState<'application' | 'interview'>('application');
+  const [activeTab, setActiveTab] = useState<'application' | 'interview'>(category ?? 'application');
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const handleToggleScorable = async (id: string, currentScorable: boolean) => {
@@ -173,6 +173,16 @@ export function QuestionManager({ cohortId, initialQuestions }: { cohortId: stri
     );
   };
 
+  // Single-category mode: render just that category without tabs
+  if (category) {
+    return (
+      <div className="space-y-6">
+        {renderQuestionList(category)}
+      </div>
+    );
+  }
+
+  // Multi-category mode: render with internal tabs
   return (
     <div className="space-y-6">
       <Tabs defaultValue="application" value={activeTab} onValueChange={(val) => setActiveTab(val as 'application' | 'interview')}>
