@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Upload, GripVertical, Shuffle, SortAsc, Save, Loader2 } from "lucide-react";
-import { updateCandidateOrderAction, deleteCandidateAction, updateCandidateAction, remapCandidateNumbersAction } from "./actions";
+import { Upload, GripVertical, Shuffle, SortAsc, Save, Loader2, Eye, EyeOff } from "lucide-react";
+import { updateCandidateOrderAction, deleteCandidateAction, updateCandidateAction, remapCandidateNumbersAction, toggleCandidateActiveAction, toggleAllCandidatesActiveAction } from "./actions";
 import { toast } from "sonner";
 import { EditCandidateDialog } from "./edit-candidate-dialog";
 import {
@@ -43,17 +43,20 @@ type CandidateType = {
   email: string | null;
   year: string | null;
   custom_order: number | null;
+  is_active: boolean;
 };
 
 // Sub-component for individual sortable row
 function SortableCandidateRow({ 
   candidate, 
   onEdit,
-  onDelete
+  onDelete,
+  onToggleActive,
 }: { 
   candidate: CandidateType; 
   onEdit: (candidate: CandidateType) => void;
   onDelete: (candidate: CandidateType) => void;
+  onToggleActive: (candidate: CandidateType) => void;
 }) {
   const {
     attributes,
@@ -76,7 +79,7 @@ function SortableCandidateRow({
     <tr
       ref={setNodeRef}
       style={style}
-      className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors bg-card ${isDragging ? "bg-accent/50" : ""}`}
+      className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors bg-card ${isDragging ? "bg-accent/50" : ""} ${!candidate.is_active ? "opacity-40" : ""}`}
     >
       <td className="px-4 py-3 w-10">
         <button
@@ -86,6 +89,19 @@ function SortableCandidateRow({
           title="Drag to reorder"
         >
           <GripVertical size={16} />
+        </button>
+      </td>
+      <td className="px-4 py-3 w-12">
+        <button
+          onClick={() => onToggleActive(candidate)}
+          className={`p-1 rounded transition-colors ${
+            candidate.is_active
+              ? "text-green-600 hover:text-green-700 dark:text-green-500 dark:hover:text-green-400"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          title={candidate.is_active ? "Active — click to deactivate" : "Inactive — click to activate"}
+        >
+          {candidate.is_active ? <Eye size={16} /> : <EyeOff size={16} />}
         </button>
       </td>
       <td className="px-4 py-3 tabular-nums text-muted-foreground">
@@ -133,7 +149,7 @@ export function CandidatesClient({
   activeCohort 
 }: { 
   initialCandidates: CandidateType[], 
-  activeCohort: { term: string, year: number } | null 
+  activeCohort: { id: string, term: string, year: number } | null 
 }) {
   const [candidates, setCandidates] = useState<CandidateType[]>(initialCandidates);
   const [isSaving, setIsSaving] = useState(false);
@@ -310,6 +326,37 @@ export function CandidatesClient({
         <div className="flex flex-wrap gap-2">
           {candidates.length > 0 && (
             <>
+              {candidates.every(c => c.is_active) ? (
+                <Button
+                  onClick={async () => {
+                    if (!activeCohort) return;
+                    const result = await toggleAllCandidatesActiveAction(activeCohort.id, false);
+                    if (result.error) { toast.error(result.error); return; }
+                    setCandidates(curr => curr.map(c => ({ ...c, is_active: false })));
+                    toast.success("All candidates deactivated");
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  <EyeOff size={16} className="mr-2" />
+                  Deactivate All
+                </Button>
+              ) : (
+                <Button
+                  onClick={async () => {
+                    if (!activeCohort) return;
+                    const result = await toggleAllCandidatesActiveAction(activeCohort.id, true);
+                    if (result.error) { toast.error(result.error); return; }
+                    setCandidates(curr => curr.map(c => ({ ...c, is_active: true })));
+                    toast.success("All candidates activated");
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Eye size={16} className="mr-2" />
+                  Activate All
+                </Button>
+              )}
               <Button onClick={handleSortAlphabetical} variant="secondary" size="sm">
                 <SortAsc size={16} className="mr-2" />
                 Alpha
@@ -367,6 +414,9 @@ export function CandidatesClient({
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="w-10 px-4 py-3"></th>
+                <th className="w-12 px-4 py-3 font-medium text-muted-foreground" title="Active status">
+                  <Eye size={14} className="mx-auto" />
+                </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">
                   #
                 </th>
@@ -400,7 +450,14 @@ export function CandidatesClient({
                       key={c.id} 
                       candidate={c} 
                       onEdit={handleEditCandidate} 
-                      onDelete={handleDeleteCandidate} 
+                      onDelete={handleDeleteCandidate}
+                      onToggleActive={async (cand) => {
+                        const newVal = !cand.is_active;
+                        const result = await toggleCandidateActiveAction(cand.id, newVal);
+                        if (result.error) { toast.error(result.error); return; }
+                        setCandidates(curr => curr.map(cc => cc.id === cand.id ? { ...cc, is_active: newVal } : cc));
+                        toast.success(newVal ? "Candidate activated" : "Candidate deactivated");
+                      }}
                     />
                   ))}
                 </SortableContext>

@@ -15,10 +15,7 @@ export async function BoardMemberProgress({ cohortId, candidateCount }: { cohort
   // 1. Fetch Board Members for this cohort
   const { data: boardMembers } = await supabase
     .from("board_memberships")
-    .select(`
-      user_id,
-      users:user_id (email, first_name, last_name)
-    `)
+    .select("user_id")
     .eq("cohort_id", cohortId);
 
   if (!boardMembers || boardMembers.length === 0) {
@@ -29,16 +26,23 @@ export async function BoardMemberProgress({ cohortId, candidateCount }: { cohort
     );
   }
 
-  // 2. Fetch all ratings for this cohort to calculate progress
+  const userIds = boardMembers.map((bm) => bm.user_id);
+
+  // 2. Fetch profiles for names (first_name/last_name live in profiles, not auth.users)
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("user_id, first_name, last_name")
+    .in("user_id", userIds);
+
+  // 3. Fetch all ratings for this cohort to calculate progress
   const { data: allRatings } = await supabase
     .from("ratings")
     .select("voter_id, rating_type")
     .eq("cohort_id", cohortId);
 
-  // 3. Process data
+  // 4. Process data
   const progressMap = boardMembers.map((bm) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = bm.users as any; // Handle join type
+    const profile = profiles?.find((p) => p.user_id === bm.user_id);
     const voterId = bm.user_id;
     
     const userRatings = allRatings?.filter(r => r.voter_id === voterId) || [];
@@ -48,8 +52,7 @@ export async function BoardMemberProgress({ cohortId, candidateCount }: { cohort
     const countChar = userRatings.filter(r => r.rating_type === "character").length;
 
     return {
-      name: user ? `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email : "Unknown User",
-      email: user?.email,
+      name: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Unknown User" : "Unknown User",
       app: countApp,
       int: countInt,
       char: countChar,
@@ -81,7 +84,6 @@ export async function BoardMemberProgress({ cohortId, candidateCount }: { cohort
               <TableRow key={idx}>
                 <TableCell>
                   <div className="font-medium">{pm.name}</div>
-                  <div className="text-xs text-muted-foreground">{pm.email}</div>
                 </TableCell>
                 <TableCell className="text-center">{getStatusBadge(pm.app, candidateCount)}</TableCell>
                 <TableCell className="text-center">{getStatusBadge(pm.int, candidateCount)}</TableCell>

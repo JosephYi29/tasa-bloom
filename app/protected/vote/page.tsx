@@ -37,6 +37,7 @@ export default async function VoteHubPage() {
           (rating_type)
       `)
       .eq("cohort_id", activeCohort.id)
+      .eq("is_active", true)
       .eq("ratings.voter_id", user.id) // Only get ratings submitted by current user
       .order("custom_order", { ascending: true }) // custom_order first priority
       .order("candidate_number", { ascending: true }); // safety fallback

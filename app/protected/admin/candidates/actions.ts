@@ -167,3 +167,51 @@ export async function upsertInterviewLinkAction(candidateId: string, videoUrl: s
   revalidatePath(`/protected/vote/${candidateId}/interview`);
   return { success: true };
 }
+
+export async function toggleCandidateActiveAction(candidateId: string, isActive: boolean) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase
+    .from("candidates")
+    .update({ is_active: isActive })
+    .eq("id", candidateId);
+
+  if (error) {
+    console.error("Failed to toggle candidate:", error);
+    return { error: "Failed to toggle candidate" };
+  }
+
+  revalidatePath("/protected/admin/candidates");
+  revalidatePath("/protected/admin");
+  revalidatePath("/protected/vote");
+  return { success: true };
+}
+
+export async function toggleAllCandidatesActiveAction(cohortId: string, isActive: boolean) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase
+    .from("candidates")
+    .update({ is_active: isActive })
+    .eq("cohort_id", cohortId);
+
+  if (error) {
+    console.error("Failed to toggle all candidates:", error);
+    return { error: "Failed to toggle all candidates" };
+  }
+
+  revalidatePath("/protected/admin/candidates");
+  revalidatePath("/protected/admin");
+  revalidatePath("/protected/vote");
+  return { success: true };
+}

@@ -378,6 +378,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 ### Step 6.5: Backlog / Future Enhancements
 - [x] **Global Settings Page (`/protected/admin/settings`)**: A dedicated page for managing global configurations such as scoring weights, default character traits, notification settings, and other app-wide parameters that don't belong strictly to a single cohort.
+- [x] **Candidate Active/Inactive Toggle**: Admins can toggle individual candidates on/off (or bulk toggle all) from `/protected/admin/candidates`. Inactive candidates are hidden from voters and excluded from scoring but preserved in the database. Uses `is_active` column on `candidates` table (migration `18_add_candidate_is_active.sql`).
 
 ---
 

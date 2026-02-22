@@ -108,3 +108,15 @@ As an admin, you have full control over how Candidates are presented to voters o
 7. Click **Save Order**.
 8. In the sidebar, click the main **Vote** link to head to the Voting Hub.
 9. Notice that the candidate order now perfectly matches the custom configuration you just saved!
+
+## 9. Test Candidate Active/Inactive Toggle (Feature)
+As an admin, you can toggle candidates on/off instead of deleting them. Inactive candidates are hidden from voters and excluded from scoring.
+
+1. As an admin, click **Candidates** in the Admin sidebar.
+2. You should see an **eye icon** column next to each candidate's drag handle.
+3. **Toggle Individual Candidate:** Click the eye icon on any candidate. The icon changes to a crossed-out eye and the row dims to 40% opacity, indicating the candidate is inactive.
+4. **Toggle All:** At the top toolbar, click the **Deactivate All** button (appears when all candidates are active). All rows should dim. The button changes to **Activate All** — click it to re-enable everyone.
+5. **Verify Voter Exclusion:** With one or more candidates deactivated, click the main **Vote** link in the sidebar. The deactivated candidates should NOT appear in the Voting Hub grid.
+6. **Verify Results Exclusion:** As an admin, go to **Results**. Deactivated candidates should not appear in the leaderboard or scoring calculations.
+7. **Verify Admin Dashboard Count:** Go to the admin **Overview** page. The candidate count card should only reflect active candidates.
+8. **Re-activate:** Go back to **Candidates**, click the crossed-out eye icon to re-enable any deactivated candidates. Verify they reappear in the Voting Hub.

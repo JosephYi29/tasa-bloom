@@ -38,7 +38,8 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
   const { data: candidates, error: candError } = await supabase
     .from("candidates")
     .select("id, first_name, last_name, candidate_number, email")
-    .eq("cohort_id", cohortId);
+    .eq("cohort_id", cohortId)
+    .eq("is_active", true);
 
   if (candError) throw candError;
 

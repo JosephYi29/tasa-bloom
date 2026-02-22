@@ -25,7 +25,8 @@ export default async function AdminOverviewPage() {
     const { count } = await supabase
       .from("candidates")
       .select("*", { count: "exact", head: true })
-      .eq("cohort_id", activeCohort.id);
+      .eq("cohort_id", activeCohort.id)
+      .eq("is_active", true);
     candidateCount = count ?? 0;
   }
 

@@ -27,12 +27,13 @@ export default async function CandidatesPage() {
     email: string | null;
     year: string | null;
     custom_order: number | null;
+    is_active: boolean;
   }[] = [];
 
   if (activeCohort) {
     const { data } = await supabase
       .from("candidates")
-      .select("id, candidate_number, first_name, last_name, email, year, custom_order")
+      .select("id, candidate_number, first_name, last_name, email, year, custom_order, is_active")
       .eq("cohort_id", activeCohort.id)
       .order("custom_order", { ascending: true }) // First sort by custom_order
       .order("candidate_number", { ascending: true }); // Fallback to candidate_number
