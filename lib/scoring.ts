@@ -60,7 +60,7 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
     };
   }
 
-  // 3. Fetch Ratings & Scores
+  // 3. Fetch Ratings & Scores (include question_id/trait_id for per-item outlier detection)
   const { data: rawRatings, error: ratError } = await supabase
     .from("ratings")
     .select(`
@@ -68,62 +68,80 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
       candidate_id,
       rating_type,
       voter_id,
-      rating_scores (score)
+      rating_scores (score, question_id, trait_id)
     `)
     .eq("cohort_id", cohortId);
 
   if (ratError) throw ratError;
 
-  // Group scores by category per candidate
-  // Using a map structure: 
-  // candidateScores[candidate_id][rating_type] = array of all individual scores (1-10)
+  // Group scores by category per candidate, but also track per-item scores for outlier detection
+  // scoreMap[candidate_id][rating_type] = all scores (flat, for average)
+  // itemScoreMap[candidate_id][rating_type][question_id|trait_id] = scores for that specific item
   const scoreMap: Record<string, { application: number[], interview: number[], character: number[] }> = {};
+  const itemScoreMap: Record<string, { application: Record<string, number[]>, interview: Record<string, number[]>, character: Record<string, number[]> }> = {};
 
   candidates.forEach(c => {
     scoreMap[c.id] = { application: [], interview: [], character: [] };
+    itemScoreMap[c.id] = { application: {}, interview: {}, character: {} };
   });
 
   rawRatings.forEach(rating => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const scores = rating.rating_scores.map((rs: any) => rs.score) as number[];
-    if (rating.candidate_id && scoreMap[rating.candidate_id]) {
-        // add all individual question scores from this voter to the pool
+    rating.rating_scores.forEach((rs: any) => {
+      if (rating.candidate_id && scoreMap[rating.candidate_id]) {
         const type = rating.rating_type as "application" | "interview" | "character";
         if (scoreMap[rating.candidate_id][type]) {
-            scoreMap[rating.candidate_id][type].push(...scores);
+          scoreMap[rating.candidate_id][type].push(rs.score);
+          
+          // Track per-item for outlier detection
+          const itemKey = rs.question_id || rs.trait_id || "unknown";
+          if (!itemScoreMap[rating.candidate_id][type][itemKey]) {
+            itemScoreMap[rating.candidate_id][type][itemKey] = [];
+          }
+          itemScoreMap[rating.candidate_id][type][itemKey].push(rs.score);
         }
-    }
+      }
+    });
   });
 
-  // Calculate averages & outliers
+  // Calculate averages & outliers (per-item outlier detection to match detail page)
   const stdThreshold = settings.outlier_std_devs;
 
   const results: ScoredCandidate[] = candidates.map(c => {
-    const processCategory = (scores: number[]): CandidateScoreCategory => {
-      if (scores.length === 0) return { average: null, rawScores: [], outliers: [], isComplete: false };
+    const processCategory = (allScores: number[], itemGroups: Record<string, number[]>): CandidateScoreCategory => {
+      if (allScores.length === 0) return { average: null, rawScores: [], outliers: [], isComplete: false };
       
-      const m = mean(scores);
-      const s = stdev(scores);
+      // Detect outliers per question/trait (matching the detail page logic)
+      const allOutliers: number[] = [];
+      const allValid: number[] = [];
+      
+      Object.values(itemGroups).forEach(itemScores => {
+        if (itemScores.length === 0) return;
+        const m = mean(itemScores);
+        const s = stdev(itemScores);
+        
+        itemScores.forEach(score => {
+          if (s > 0 && Math.abs(score - m) > (stdThreshold * s)) {
+            allOutliers.push(score);
+          } else {
+            allValid.push(score);
+          }
+        });
+      });
 
-      // find outliers
-      const outliers = scores.filter(score => Math.abs(score - m) > (stdThreshold * s));
-      
-      // non-outliers
-      const validScores = scores.filter(score => Math.abs(score - m) <= (stdThreshold * s));
-      
-      const finalAverage = validScores.length > 0 ? mean(validScores) : m;
+      const finalAverage = allValid.length > 0 ? mean(allValid) : mean(allScores);
 
       return {
         average: finalAverage,
-        rawScores: scores,
-        outliers,
+        rawScores: allScores,
+        outliers: allOutliers,
         isComplete: true
       };
     };
 
-    const appData = processCategory(scoreMap[c.id].application);
-    const intData = processCategory(scoreMap[c.id].interview);
-    const charData = processCategory(scoreMap[c.id].character);
+    const appData = processCategory(scoreMap[c.id].application, itemScoreMap[c.id].application);
+    const intData = processCategory(scoreMap[c.id].interview, itemScoreMap[c.id].interview);
+    const charData = processCategory(scoreMap[c.id].character, itemScoreMap[c.id].character);
 
     // Compute composite if all three have averages (or if you want to allow partial composites, adjust here)
     let composite = null;

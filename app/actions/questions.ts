@@ -61,3 +61,20 @@ export async function deleteQuestion(id: string) {
   revalidatePath("/protected/admin/settings/questions");
   return { success: true };
 }
+
+export async function toggleQuestionScorable(id: string, isScorable: boolean) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) throw new Error("Unauthorized");
+
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase
+    .from("application_questions")
+    .update({ is_scorable: isScorable })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/protected/admin/settings/questions");
+  return { success: true };
+}

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 
 export async function importLegacyRatings(
   cohortId: string,
-  questionHeaders: { header: string; colIndex: number }[],
+  questionHeaders: { header: string; colIndex: number; questionId?: string }[],
   rows: string[][],
   columnIndices: {
     voterIdx: number;
@@ -21,10 +21,16 @@ export async function importLegacyRatings(
 
   const supabase = await createAdminClient();
 
-  // 1. Create Application Questions or Character Traits for the legacy scores
+  // 1. Create or map Application Questions / Character Traits for the legacy scores
   const questionIds: Record<number, string> = {};
   for (let qi = 0; qi < questionHeaders.length; qi++) {
     const q = questionHeaders[qi];
+    
+    // If an explicit questionId is provided, use it directly (no create/match needed)
+    if (q.questionId) {
+      questionIds[q.colIndex] = q.questionId;
+      continue;
+    }
     
     if (ratingType === "character") {
       const { data: existingQ } = await supabase

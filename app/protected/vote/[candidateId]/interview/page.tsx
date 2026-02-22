@@ -67,6 +67,7 @@ export default async function CandidateInterviewPage({
     .select("id, question_text")
     .eq("cohort_id", candidate.cohort_id)
     .eq("category", "interview")
+    .eq("is_scorable", true)
     .order("question_order", { ascending: true });
 
   const mappedQuestions = (questions ?? []).map((q) => ({

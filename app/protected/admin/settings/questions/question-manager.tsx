@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Plus, GripVertical, Trash2, Edit2, Check, X, Loader2 } from "lucide-react";
-import { createQuestion, updateQuestion, deleteQuestion } from "@/app/actions/questions";
+import { createQuestion, updateQuestion, deleteQuestion, toggleQuestionScorable } from "@/app/actions/questions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Question = {
@@ -12,6 +13,7 @@ type Question = {
   question_text: string;
   question_order: number;
   category: 'application' | 'interview';
+  is_scorable: boolean;
 };
 
 export function QuestionManager({ cohortId, initialQuestions }: { cohortId: string, initialQuestions: Question[] }) {
@@ -21,6 +23,20 @@ export function QuestionManager({ cohortId, initialQuestions }: { cohortId: stri
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [activeTab, setActiveTab] = useState<'application' | 'interview'>('application');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const handleToggleScorable = async (id: string, currentScorable: boolean) => {
+    setTogglingId(id);
+    try {
+      await toggleQuestionScorable(id, !currentScorable);
+      setQuestions(questions.map(q => q.id === id ? { ...q, is_scorable: !currentScorable } : q));
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update question.");
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +103,7 @@ export function QuestionManager({ cohortId, initialQuestions }: { cohortId: stri
             </div>
           ) : (
             list.map((q) => (
-              <div key={q.id} className="flex items-center gap-3 p-4 hover:bg-muted/10 transition-colors">
+              <div key={q.id} className={`flex items-center gap-3 p-4 hover:bg-muted/10 transition-colors ${!q.is_scorable ? 'opacity-50' : ''}`}>
                 <GripVertical className="text-muted-foreground/30 w-5 h-5 flex-shrink-0 cursor-move" />
                 
                 {editingId === q.id ? (
@@ -107,14 +123,29 @@ export function QuestionManager({ cohortId, initialQuestions }: { cohortId: stri
                   </div>
                 ) : (
                   <>
-                    <div className="flex-1 font-medium">{q.question_text}</div>
-                    <div className="flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity focus-within:opacity-100">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setEditingId(q.id); setEditValue(q.question_text); }} disabled={loading}>
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(q.id)} disabled={loading}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <div className="flex-1">
+                      <span className="font-medium">{q.question_text}</span>
+                      {!q.is_scorable && (
+                        <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground">Info Only</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5" title={q.is_scorable ? 'Scored by voters' : 'Info only — hidden from voting'}>
+                        <span className="text-xs text-muted-foreground">Score</span>
+                        <Switch
+                          checked={q.is_scorable}
+                          onCheckedChange={() => handleToggleScorable(q.id, q.is_scorable)}
+                          disabled={togglingId === q.id}
+                        />
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity focus-within:opacity-100">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setEditingId(q.id); setEditValue(q.question_text); }} disabled={loading}>
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(q.id)} disabled={loading}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </>
                 )}

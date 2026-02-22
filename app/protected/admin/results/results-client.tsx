@@ -37,20 +37,27 @@ export function ResultsClient({
 
     const headers = [
       "Rank", "Candidate ID", "First Name", "Last Name", "Email", 
-      "Application Avg", "Interview Avg", "Character Avg", "Composite Score"
+      "Application Avg", "Interview Avg", "Character Avg", "Composite Score", "Consistency %"
     ];
 
-    const rows = data.map((c, index) => [
-      index + 1,
-      c.candidate_number || c.candidate_id,
-      c.first_name,
-      c.last_name,
-      c.email || "",
-      c.application.average?.toFixed(2) || "N/A",
-      c.interview.average?.toFixed(2) || "N/A",
-      c.character.average?.toFixed(2) || "N/A",
-      c.composite_score?.toFixed(2) || "N/A"
-    ]);
+    const rows = data.map((c, index) => {
+      const totalScores = c.application.rawScores.length + c.interview.rawScores.length + c.character.rawScores.length;
+      const totalOutliers = c.application.outliers.length + c.interview.outliers.length + c.character.outliers.length;
+      const consistency = totalScores > 0 ? Math.round(((totalScores - totalOutliers) / totalScores) * 100) : "N/A";
+      
+      return [
+        index + 1,
+        c.candidate_number || c.candidate_id,
+        c.first_name,
+        c.last_name,
+        c.email || "",
+        c.application.average?.toFixed(2) || "N/A",
+        c.interview.average?.toFixed(2) || "N/A",
+        c.character.average?.toFixed(2) || "N/A",
+        c.composite_score?.toFixed(2) || "N/A",
+        consistency
+      ];
+    });
 
     const csvContent = [
       headers.join(","),
@@ -96,23 +103,40 @@ export function ResultsClient({
               <TableHead className="text-right">Int Avg</TableHead>
               <TableHead className="text-right">Char Avg</TableHead>
               <TableHead className="text-right font-bold">Composite</TableHead>
+              <TableHead className="text-center w-[100px]">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help">Consistency</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Percentage of scores within the normal range (not flagged as outliers)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No candidates found for this cohort or matching search.
                 </TableCell>
               </TableRow>
             ) : (
               filteredData.map((candidate, index) => {
                 const isTopN = index < topN && candidate.composite_score !== null;
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const pendingScores = candidate.composite_score === null;
-                const hasOutliers = candidate.application.outliers.length > 0 || 
-                                    candidate.interview.outliers.length > 0 || 
-                                    candidate.character.outliers.length > 0;
+                
+                // Compute consistency: % of scores within normal range
+                const totalScores = candidate.application.rawScores.length + 
+                                    candidate.interview.rawScores.length + 
+                                    candidate.character.rawScores.length;
+                const totalOutliers = candidate.application.outliers.length + 
+                                      candidate.interview.outliers.length + 
+                                      candidate.character.outliers.length;
+                const consistency = totalScores > 0 
+                  ? Math.round(((totalScores - totalOutliers) / totalScores) * 100) 
+                  : null;
+                const isLowConsistency = consistency !== null && consistency < 80;
 
                 return (
                   <TableRow 
@@ -123,26 +147,12 @@ export function ResultsClient({
                       {index + 1}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Link 
-                          href={`/protected/admin/results/${candidate.candidate_id}`}
-                          className="font-medium hover:underline text-primary"
-                        >
-                          {candidate.first_name} {candidate.last_name}
-                        </Link>
-                        {hasOutliers && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="cursor-help cursor-pointer">
-                                <AlertTriangle className="w-4 h-4 text-amber-500 transition-colors hover:text-amber-600" />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                              <p>Contains outlier scores flagged by standard deviation threshold</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
+                      <Link 
+                        href={`/protected/admin/results/${candidate.candidate_id}`}
+                        className="font-medium hover:underline text-primary"
+                      >
+                        {candidate.first_name} {candidate.last_name}
+                      </Link>
                       {candidate.candidate_number && (
                         <div className="text-xs text-muted-foreground">
                           #{candidate.candidate_number}
@@ -161,6 +171,33 @@ export function ResultsClient({
                     <TableCell className="text-right font-bold">
                       {candidate.composite_score !== null ? candidate.composite_score.toFixed(2) : (
                         <span className="text-muted-foreground font-normal text-sm">Pending</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {consistency !== null ? (
+                        <div className="flex items-center justify-center gap-1">
+                          {isLowConsistency && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p>{totalOutliers} of {totalScores} scores flagged as outliers</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          <span className={`text-sm tabular-nums ${
+                            isLowConsistency 
+                              ? "text-amber-600 dark:text-amber-400 font-medium" 
+                              : "text-muted-foreground"
+                          }`}>
+                            {consistency}%
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
                   </TableRow>

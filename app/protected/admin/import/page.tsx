@@ -11,6 +11,29 @@ export default async function ImportPage() {
     .eq("is_active", true)
     .single();
 
+  // Fetch existing questions and traits for the active cohort (for legacy import mapping)
+  let existingQuestions: { id: string; text: string; category: string }[] = [];
+  let existingTraits: { id: string; text: string }[] = [];
+
+  if (activeCohort) {
+    const [{ data: questions }, { data: traits }] = await Promise.all([
+      supabase
+        .from("application_questions")
+        .select("id, question_text, category")
+        .eq("cohort_id", activeCohort.id)
+        .eq("is_scorable", true)
+        .order("question_order", { ascending: true }),
+      supabase
+        .from("character_traits")
+        .select("id, trait_name")
+        .eq("cohort_id", activeCohort.id)
+        .order("trait_order", { ascending: true }),
+    ]);
+
+    existingQuestions = (questions ?? []).map(q => ({ id: q.id, text: q.question_text, category: q.category }));
+    existingTraits = (traits ?? []).map(t => ({ id: t.id, text: t.trait_name }));
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -48,6 +71,8 @@ export default async function ImportPage() {
             <LegacyCsvImporter
               cohortId={activeCohort.id}
               cohortLabel={`${activeCohort.term} ${activeCohort.year}`}
+              existingQuestions={existingQuestions}
+              existingTraits={existingTraits}
             />
           </section>
         </div>

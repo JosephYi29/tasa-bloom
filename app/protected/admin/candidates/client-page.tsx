@@ -410,6 +410,12 @@ export function CandidatesClient({
           </Button>
         </div>
       ) : (
+        <DndContext 
+          id={dndId}
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
         <div className="rounded-lg border border-border overflow-hidden bg-card">
           <table className="w-full text-sm">
             <thead>
@@ -436,12 +442,6 @@ export function CandidatesClient({
               </tr>
             </thead>
             
-            <DndContext 
-              id={dndId}
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
               <tbody className="bg-card">
                 <SortableContext 
                   items={candidates.map(c => c.id)}
@@ -464,13 +464,13 @@ export function CandidatesClient({
                   ))}
                 </SortableContext>
               </tbody>
-            </DndContext>
             
           </table>
           <div className="bg-muted/30 p-2 text-xs text-muted-foreground text-center border-t">
             Drag rows by the handles to create a custom ordering. You must click Save Order for it to take effect for voters.
           </div>
         </div>
+        </DndContext>
       )}
 
       {/* Modals outside of table flow */}

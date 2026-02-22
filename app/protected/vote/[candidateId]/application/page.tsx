@@ -64,6 +64,7 @@ export default async function CandidateApplicationPage({
     .select("id, question_text")
     .eq("cohort_id", candidate.cohort_id)
     .eq("category", "application")
+    .eq("is_scorable", true)
     .order("question_order", { ascending: true });
 
   const { data: explicitResponses } = await supabase

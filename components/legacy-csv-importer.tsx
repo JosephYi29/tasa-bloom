@@ -18,14 +18,17 @@ type MappingTarget =
 interface ColumnMapping {
   header: string;
   target: MappingTarget;
+  questionId?: string; // explicit mapping to an existing question/trait ID
 }
 
 interface LegacyCsvImporterProps {
   cohortId: string;
   cohortLabel: string;
+  existingQuestions: { id: string; text: string; category: string }[];
+  existingTraits: { id: string; text: string }[];
 }
 
-const TARGET_OPTIONS: { value: MappingTarget; label: string }[] = [
+const BASE_TARGET_OPTIONS: { value: MappingTarget; label: string }[] = [
   { value: "skip", label: "— Skip this column —" },
   { value: "voter_name", label: "Voter Name" },
   { value: "first_name", label: "Candidate First Name" },
@@ -37,7 +40,7 @@ const TARGET_OPTIONS: { value: MappingTarget; label: string }[] = [
 function guessMapping(header: string): MappingTarget {
   const h = header.toLowerCase().trim();
   if (h.includes("voter") || h.includes("board member") || h === "name" || h.includes("your name") || h.includes("reviewer"))
-    return "voter_name"; // Risky but users can fix it
+    return "voter_name";
   if (h.includes("candidate") && h.includes("first"))
     return "first_name";
   if (h.includes("candidate") && h.includes("last"))
@@ -46,7 +49,6 @@ function guessMapping(header: string): MappingTarget {
     return "full_name";
   if (h === "timestamp" || h === "date") return "skip";
   
-  // Default to question
   return "question";
 }
 
@@ -59,7 +61,7 @@ function cleanName(name: string): string {
     .join(" ");
 }
 
-export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterProps) {
+export function LegacyCsvImporter({ cohortId, cohortLabel, existingQuestions, existingTraits }: LegacyCsvImporterProps) {
   const [step, setStep] = useState<"upload" | "map" | "preview" | "done">("upload");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
@@ -67,6 +69,16 @@ export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterPr
   const [ratingType, setRatingType] = useState<"application" | "interview" | "character">("application");
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string; } | null>(null);
+
+  // Get the right list of existing items based on rating type
+  const getExistingItems = () => {
+    if (ratingType === "character") {
+      return existingTraits.map(t => ({ id: t.id, text: t.text }));
+    }
+    return existingQuestions
+      .filter(q => q.category === ratingType)
+      .map(q => ({ id: q.id, text: q.text }));
+  };
 
   const handleFile = useCallback((file: File) => {
     Papa.parse(file, {
@@ -100,7 +112,11 @@ export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterPr
   }, [handleFile]);
 
   const updateMapping = (index: number, target: MappingTarget) => {
-    setMappings((prev) => prev.map((m, i) => (i === index ? { ...m, target } : m)));
+    setMappings((prev) => prev.map((m, i) => (i === index ? { ...m, target, questionId: undefined } : m)));
+  };
+
+  const updateQuestionMapping = (index: number, questionId: string) => {
+    setMappings((prev) => prev.map((m, i) => (i === index ? { ...m, questionId: questionId || undefined } : m)));
   };
 
   const handleImport = async () => {
@@ -116,7 +132,7 @@ export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterPr
       };
 
       const questionCols = mappings
-        .map((m, i) => ({ header: m.header, colIndex: i }))
+        .map((m, i) => ({ header: m.header, colIndex: i, questionId: m.questionId }))
         .filter((_, i) => mappings[i].target === "question");
 
       const res = await importLegacyRatings(cohortId, questionCols, rows, columnIndices, ratingType);
@@ -167,6 +183,9 @@ export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterPr
   }
 
   if (step === "map") {
+    const items = getExistingItems();
+    const hasExistingItems = items.length > 0;
+
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -176,6 +195,14 @@ export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterPr
             <p className="text-xs text-muted-foreground">Map each CSV column to a database field</p>
           </div>
         </div>
+
+        {hasExistingItems && (
+          <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm text-primary">
+            <strong>{items.length} existing {ratingType === "character" ? "traits" : "questions"}</strong> found for this cohort. 
+            Map each score column to the correct one to avoid creating duplicates.
+          </div>
+        )}
+
         <div className="rounded-lg border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -183,25 +210,50 @@ export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterPr
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">CSV Column</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Sample Data</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Map To</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  {ratingType === "character" ? "Trait" : "Question"}
+                </th>
               </tr>
             </thead>
             <tbody>
               {mappings.map((m, i) => (
                 <tr key={i} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3 font-medium">{m.header}</td>
-                  <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate">{rows[0]?.[i] ?? "—"}</td>
+                  <td className="px-4 py-3 font-medium max-w-[200px]">
+                    <span className="line-clamp-2" title={m.header}>{m.header}</span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">{rows[0]?.[i] ?? "—"}</td>
                   <td className="px-4 py-3">
                     <select
                       value={m.target}
                       onChange={(e) => updateMapping(i, e.target.value as MappingTarget)}
                       className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                     >
-                      {TARGET_OPTIONS.map((opt) => (
+                      {BASE_TARGET_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
                         </option>
                       ))}
                     </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    {m.target === "question" && hasExistingItems ? (
+                      <select
+                        value={m.questionId || ""}
+                        onChange={(e) => updateQuestionMapping(i, e.target.value)}
+                        className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                      >
+                        <option value="">— Create New —</option>
+                        {items.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.text.length > 50 ? item.text.substring(0, 50) + "…" : item.text}
+                          </option>
+                        ))}
+                      </select>
+                    ) : m.target === "question" ? (
+                      <span className="text-xs text-muted-foreground italic">Will create new</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -222,10 +274,25 @@ export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterPr
     const lnIdx = mappings.findIndex((m) => m.target === "last_name");
     const fullIdx = mappings.findIndex((m) => m.target === "full_name");
     const voterIdx = mappings.findIndex((m) => m.target === "voter_name");
+    const questionMappings = mappings.filter(m => m.target === "question");
+    const mappedToExisting = questionMappings.filter(m => m.questionId).length;
+    const creatingNew = questionMappings.length - mappedToExisting;
 
     return (
       <div className="space-y-6">
         <p className="text-sm font-medium">Preview — first {previewRows.length} of {rows.length} votes</p>
+        
+        {(mappedToExisting > 0 || creatingNew > 0) && (
+          <div className="text-sm text-muted-foreground flex gap-4">
+            {mappedToExisting > 0 && (
+              <span className="text-primary font-medium">{mappedToExisting} mapped to existing</span>
+            )}
+            {creatingNew > 0 && (
+              <span className="text-amber-600 font-medium">{creatingNew} will create new</span>
+            )}
+          </div>
+        )}
+
         <div className="rounded-lg border border-border overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -250,7 +317,7 @@ export function LegacyCsvImporter({ cohortId, cohortLabel }: LegacyCsvImporterPr
                   <tr key={ri} className="border-b border-border last:border-0">
                     <td className="px-4 py-3 tabular-nums font-medium">{voterLabel || "(no voter)"}</td>
                     <td className="px-4 py-3 font-medium">{name || "(no name)"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{mappings.filter((m) => m.target === "question").length}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{questionMappings.length}</td>
                   </tr>
                 );
               })}
