@@ -182,10 +182,10 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] Admin overview page with quick action cards
 - [x] **Candidate Detail View** (`/protected/admin/candidates/[id]`): Shows full profile, responses, and interview video.
 - [x] Manual add/edit/delete individual candidates (Include Edit modal and Delete confirmation on the candidate list table)
-- [ ] Upload/link interview recordings per candidate
-- [ ] Manage application questions per cohort (add, edit, reorder, delete)
-- [ ] **Dynamic Sorting**: Allow admins to easily sort the candidate table list numerically by Candidate Number.
-- [ ] **Remap Candidate Order Feature**: Introduce an action button allowing admins to visually sort the table (e.g., alphabetically) and then automatically reassign all Candidate Numbers sequentially (1, 2, 3...) based on that new view.
+- [x] Upload/link interview recordings per candidate
+- [x] Manage application questions per cohort (add, edit, reorder, delete)
+- [x] **Dynamic Sorting**: Allow admins to easily sort the candidate table list numerically by Candidate Number.
+- [x] **Remap Candidate Order Feature**: Introduce an action button allowing admins to visually sort the table (e.g., alphabetically) and then automatically reassign all Candidate Numbers sequentially (1, 2, 3...) based on that new view.
 
 ---
 
@@ -248,7 +248,7 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Slider or number input (1–10) for each question
   - [x] Optional comment box per question
   - [x] Save as draft / Submit final rating (with AlertDialog confirmation)
-  - [ ] Visual indicator showing which candidates the voter has already rated
+  - [x] Visual indicator showing which candidates the voter has already rated
   - [x] **CRITICAL**: Application rating must be completely anonymous. The candidate's name and identifying details should be hidden from the voter during this phase.
 
 ### Step 3.5: Voting UI — Interview Rating ✅
@@ -264,13 +264,13 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Score input (1–10) per trait
   - [x] Optional comment per trait
   - [x] Save / Submit final rating (with AlertDialog confirmation)
-  - [ ] **Abstain Option**: Allow voters to explicitly "Abstain" from evaluating a candidate. This records their ballot as submitted (for voting progress tracking) but excludes their null scores from the candidate's average calculation entirely.
+  - [x] **Abstain Option**: Allow voters to explicitly "Abstain" from evaluating a candidate. This records their ballot as submitted (for voting progress tracking) but excludes their null scores from the candidate's average calculation entirely.
   - Note: This phase will *always* occur AFTER the Interview and Application phases, typically during an in-person group discussion. Admins will lock this phase until the earlier phases are complete.
 
 ### Step 3.7: Voting Progress Tracker
-- [ ] Dashboard showing the voter's progress: which candidates have been rated, which are pending
-- [ ] Color-coded status: ⬜ Not Started, 🟡 In Progress (drafted), ✅ Complete
-- [ ] Separate progress for Application / Interview / Character
+- [x] Dashboard showing the voter's progress: which candidates have been rated, which are pending
+- [x] Color-coded status: ⬜ Not Started, 🟡 In Progress (drafted), ✅ Complete
+- [x] Separate progress for Application / Interview / Character
 
 ---
 
@@ -291,7 +291,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] Invite/add board members to a cohort, assign positions
 
 ### Step 4.3: Admin — Voting Oversight
-- [ ] **Board Member Progress**: See which board members have completed their ratings (per category)
+- [x] **Board Member Progress**: See which board members have completed their ratings (per category)
 - [x] **Individual Vote Viewer**: View all scores submitted by a specific board member
 - [x] **Candidate Vote Breakdown**: View all individual scores for a specific candidate, broken down by voter
 

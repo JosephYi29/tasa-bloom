@@ -57,6 +57,7 @@ Now, experience the app as a voter.
 5. **Test Character Rating:** Go back to the Hub, click **Character** for Jane.
    * You should see the traits you added to the database in Step 2.
    * Rate them 1-10, trigger the submission modal, and hit **Confirm Submission**.
+   * **Test Abstain:** Alternatively, test the "Abstain from Evaluation" button on another candidate. Verify it completes the ballot without recording a score of 0.
 
 ## 5. Verify Database State
 To confirm everything worked end-to-end:
@@ -77,9 +78,10 @@ Let's verify the admin oversight and cohort management tools.
 8. **Board Management:** Click the **Board Members** tab in the Admin sidebar.
    * Add a registered user (e.g., yourself or a dummy account) to the board for the active cohort, assigning them a position (e.g., "President").
    * Verify they appear in the list.
-9. **Oversight Dashboard:** Click **Oversight** in the Admin sidebar.
-   * You should see progress bars for every board member in the active cohort.
-   * If you submitted scores in Step 4, your progress bar should reflect the number of candidates you've rated versus the total number of candidates in the active cohort.
+9. **Test Application Questions:** Click **Settings** > **Application Questions**. Add new sample questions for the Application and Interview tabs. Verify they show up on the Voting Hub when rating candidates.
+10. **Oversight Dashboard:** Click **Overview** in the Admin sidebar.
+   * You should see a progress tracking table for all board members in the active cohort.
+   * If you submitted scores in Step 4, your counts should reflect the number of candidates you've rated versus the total number of candidates in the active cohort (color coded yellow or green).
 
 ## 7. Test Scoring & Results Analytics (Phase 5)
 Now, let's verify the automatic scoring engine and export features.
@@ -102,6 +104,7 @@ As an admin, you have full control over how Candidates are presented to voters o
 3. Click the **Alphabetical** button to sort them by first name.
 4. Click the **Randomize** button to shuffle the candidates wildly.
 5. In addition to the auto-sorters, you can **Drag and Drop** any candidate row up and down the table using their left-side grip handle!
-6. Click **Save Order**.
-7. In the sidebar, click the main **Vote** link to head to the Voting Hub.
-8. Notice that the candidate order now perfectly matches the custom configuration you just saved!
+6. Click the **Remap Numbers** button. This will sequentially overwrite all Candidate Numbers from 1 to N based on the current visual order in the table, resolving any gaps or unordered numbering.
+7. Click **Save Order**.
+8. In the sidebar, click the main **Vote** link to head to the Voting Hub.
+9. Notice that the candidate order now perfectly matches the custom configuration you just saved!
