@@ -120,3 +120,25 @@ As an admin, you can toggle candidates on/off instead of deleting them. Inactive
 6. **Verify Results Exclusion:** As an admin, go to **Results**. Deactivated candidates should not appear in the leaderboard or scoring calculations.
 7. **Verify Admin Dashboard Count:** Go to the admin **Overview** page. The candidate count card should only reflect active candidates.
 8. **Re-activate:** Go back to **Candidates**, click the crossed-out eye icon to re-enable any deactivated candidates. Verify they reappear in the Voting Hub.
+
+## 10. Test Board Position Management (Feature)
+As an admin, you can add new board positions and toggle existing ones active/inactive from Settings.
+
+1. As an admin, click **Settings** in the Admin sidebar.
+2. You should see a **Board Positions** tile. Click it.
+3. **View Positions:** The page at `/protected/admin/settings/positions` should list all board positions with toggle switches. Active positions appear in the top section, inactive ones (if any) appear in a dimmed lower section.
+4. **Toggle a Position Off:** Flip the toggle switch on any position (e.g., "Webmaster"). It should move to the "Inactive Positions" section with dimmed styling.
+5. **Verify Assignment Dropdown:** Go to **Board Members** in the Admin sidebar. Click **Add Member**. The position dropdown should NOT include the position you just deactivated.
+6. **Add a New Position:** Go back to **Settings** > **Board Positions**. In the input at the bottom, type a new position name (e.g., "Tech Lead") and click **Add Position**. It should appear in the active list.
+7. **Toggle Back On:** Flip an inactive position's toggle back on. It should return to the active section and reappear in the assignment dropdown.
+
+## 11. Test Board Member Availability Toggle (Feature)
+As an admin, you can toggle individual board members as available/unavailable. Unavailable members remain on the board but are excluded from voting progress counts.
+
+1. As an admin, click **Board Members** in the Admin sidebar.
+2. You should see an **Available** column with toggle switches for each member.
+3. **Toggle a Member Unavailable:** Flip a toggle to "No". The member's row should dim and the label should change to "No".
+4. **Verify Voting Progress Exclusion:** Go to the admin **Overview** page. The Board Member Voting Progress table should NOT include the unavailable member.
+5. **Verify Oversight Exclusion:** Go to **Oversight** in the Admin sidebar. The unavailable member should NOT have a progress card.
+6. **Re-enable:** Go back to **Board Members** and flip the toggle back to "Yes". The member should reappear in voting progress views.
+

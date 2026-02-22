@@ -37,14 +37,16 @@ export default async function AdminOversightPage() {
 
   const totalCandidates = candidateCount || 0;
 
-  // 3. Get all board members for active cohort
+  // 3. Get all available board members for active cohort (exclude unavailable)
   const { data: boardMembers } = await supabase
     .from("board_memberships")
     .select(`
       user_id,
+      is_available,
       board_positions ( name )
     `)
-    .eq("cohort_id", activeCohort.id);
+    .eq("cohort_id", activeCohort.id)
+    .eq("is_available", true);
 
   const userIds = boardMembers?.map((m) => m.user_id) || [];
 

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Trash2, UserPlus } from "lucide-react";
-import { addBoardMember, removeBoardMember } from "@/app/actions/board";
+import { addBoardMember, removeBoardMember, toggleBoardMemberAvailability } from "@/app/actions/board";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ interface BoardMember {
   positionId: string;
   positionName: string;
   isAdmin: boolean;
+  isAvailable: boolean;
 }
 
 interface Position {
@@ -55,6 +57,8 @@ export function BoardList({
   const [selectedPosition, setSelectedPosition] = useState("");
   const [loading, setLoading] = useState(false);
   const [removeLoading, setRemoveLoading] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [memberState, setMemberState] = useState<BoardMember[]>(members);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +87,18 @@ export function BoardList({
       alert(`Error: ${(err as Error).message}`);
     } finally {
       setRemoveLoading(null);
+    }
+  };
+
+  const handleToggleAvailability = async (userId: string, currentAvailable: boolean) => {
+    setTogglingId(userId);
+    try {
+      await toggleBoardMemberAvailability(userId, !currentAvailable);
+      setMemberState(prev => prev.map(m => m.userId === userId ? { ...m, isAvailable: !currentAvailable } : m));
+    } catch (err: unknown) {
+      alert(`Error: ${(err as Error).message}`);
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -157,24 +173,40 @@ export function BoardList({
       {/* Member List */}
       <div className="border border-border rounded-lg overflow-hidden bg-card">
         <div className="grid grid-cols-12 gap-4 p-4 font-semibold border-b border-border bg-muted/50 text-muted-foreground text-sm">
-          <div className="col-span-5">Name</div>
-          <div className="col-span-5">Position</div>
+          <div className="col-span-4">Name</div>
+          <div className="col-span-3">Position</div>
+          <div className="col-span-3 text-center">Available</div>
           <div className="col-span-2 text-right">Actions</div>
         </div>
         
         <div className="divide-y divide-border">
-          {members.map((member) => (
-            <div key={member.userId} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-muted/20 transition-colors">
-              <div className="col-span-5 font-medium">
+          {memberState.map((member) => (
+            <div 
+              key={member.userId} 
+              className={`grid grid-cols-12 gap-4 p-4 items-center transition-colors ${
+                member.isAvailable ? 'hover:bg-muted/20' : 'opacity-50 bg-muted/10'
+              }`}
+            >
+              <div className="col-span-4 font-medium">
                 {member.name}
               </div>
-              <div className="col-span-5 flex items-center gap-2">
+              <div className="col-span-3 flex items-center gap-2">
                 {member.positionName}
                 {member.isAdmin && (
                   <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
                     Admin
                   </span>
                 )}
+              </div>
+              <div className="col-span-3 flex items-center justify-center gap-2">
+                <Switch
+                  checked={member.isAvailable}
+                  onCheckedChange={() => handleToggleAvailability(member.userId, member.isAvailable)}
+                  disabled={togglingId === member.userId}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {member.isAvailable ? "Yes" : "No"}
+                </span>
               </div>
               <div className="col-span-2 text-right">
                 <Button 
@@ -190,7 +222,7 @@ export function BoardList({
             </div>
           ))}
 
-          {members.length === 0 && (
+          {memberState.length === 0 && (
             <div className="p-8 text-center text-muted-foreground">
               No board members added to this cycle yet.
             </div>

@@ -34,6 +34,7 @@ export default async function AdminBoardPage() {
     .select(`
       user_id,
       position_id,
+      is_available,
       board_positions ( id, name, is_admin )
     `)
     .eq("cohort_id", activeCohort.id);
@@ -56,13 +57,15 @@ export default async function AdminBoardPage() {
       positionId: m.position_id,
       positionName: (m.board_positions as { name?: string })?.name || "Unknown",
       isAdmin: (m.board_positions as { is_admin?: boolean })?.is_admin || false,
+      isAvailable: m.is_available ?? true,
     };
   }) || [];
 
-  // Get all available positions for the dropdown
+  // Get only ACTIVE positions for the assignment dropdown
   const { data: positions } = await supabase
     .from("board_positions")
     .select("*")
+    .eq("is_active", true)
     .order("name");
 
   // Get all registered profiles that ARE NOT in this cohort yet for the invite dropdown

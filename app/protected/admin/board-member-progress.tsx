@@ -12,11 +12,12 @@ import { Badge } from "@/components/ui/badge";
 export async function BoardMemberProgress({ cohortId, candidateCount }: { cohortId: string; candidateCount: number }) {
   const supabase = await createAdminClient();
 
-  // 1. Fetch Board Members for this cohort
+  // 1. Fetch Board Members for this cohort (only available ones for progress tracking)
   const { data: boardMembers } = await supabase
     .from("board_memberships")
-    .select("user_id")
-    .eq("cohort_id", cohortId);
+    .select("user_id, is_available")
+    .eq("cohort_id", cohortId)
+    .eq("is_available", true);
 
   if (!boardMembers || boardMembers.length === 0) {
     return (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Briefcase } from "lucide-react";
 
 export default function AdminSettingsPage() {
   return (
@@ -20,6 +20,19 @@ export default function AdminSettingsPage() {
             </h3>
             <p className="text-sm text-muted-foreground mt-2 flex-1">
               Configure the weights for application, interview, and character scores, as well as outlier removal settings.
+            </p>
+          </div>
+        </Link>
+
+        {/* Board Positions Setting */}
+        <Link href="/protected/admin/settings/positions" className="block group">
+          <div className="border border-border p-6 rounded-lg hover:border-primary/50 transition-colors bg-card h-full flex flex-col">
+            <h3 className="text-lg font-semibold flex items-center gap-2 group-hover:text-primary transition-colors">
+              <Briefcase className="w-5 h-5" />
+              Board Positions
+            </h3>
+            <p className="text-sm text-muted-foreground mt-2 flex-1">
+              Add new board positions or toggle existing ones active/inactive. Inactive positions are hidden from assignment but preserved for audit.
             </p>
           </div>
         </Link>

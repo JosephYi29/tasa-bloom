@@ -70,3 +70,31 @@ export async function removeBoardMember(userId: string) {
   revalidatePath("/protected/admin/board");
   return { success: true };
 }
+
+export async function toggleBoardMemberAvailability(userId: string, isAvailable: boolean) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) throw new Error("Unauthorized");
+
+  const supabase = await createAdminClient();
+
+  const { data: activeCohort } = await supabase
+    .from("cohorts")
+    .select("id")
+    .eq("is_active", true)
+    .single();
+
+  if (!activeCohort) throw new Error("No active cohort found");
+
+  const { error } = await supabase
+    .from("board_memberships")
+    .update({ is_available: isAvailable })
+    .eq("user_id", userId)
+    .eq("cohort_id", activeCohort.id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/protected/admin/board");
+  revalidatePath("/protected/admin");
+  revalidatePath("/protected/admin/oversight");
+  return { success: true };
+}
