@@ -8,6 +8,14 @@ export type CandidateScoreCategory = {
   isComplete: boolean;
 };
 
+export type TraitScore = {
+  trait_id: string;
+  trait_name: string;
+  average: number | null;
+  rawScores: number[];
+  outliers: number[];
+};
+
 export type ScoredCandidate = {
   candidate_id: string;
   first_name: string;
@@ -17,6 +25,7 @@ export type ScoredCandidate = {
   application: CandidateScoreCategory;
   interview: CandidateScoreCategory;
   character: CandidateScoreCategory;
+  characterTraits: TraitScore[];
   composite_score: number | null;
 };
 
@@ -60,7 +69,16 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
     };
   }
 
-  // 3. Fetch Ratings & Scores (include question_id/trait_id for per-item outlier detection)
+  // 3. Fetch character traits for this cohort
+  const { data: characterTraits, error: traitError } = await supabase
+    .from("character_traits")
+    .select("id, trait_name, trait_order, weight")
+    .eq("cohort_id", cohortId)
+    .order("trait_order", { ascending: true });
+
+  if (traitError) throw traitError;
+
+  // 4. Fetch Ratings & Scores (include question_id/trait_id for per-item outlier detection)
   const { data: rawRatings, error: ratError } = await supabase
     .from("ratings")
     .select(`
@@ -79,10 +97,16 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
   // itemScoreMap[candidate_id][rating_type][question_id|trait_id] = scores for that specific item
   const scoreMap: Record<string, { application: number[], interview: number[], character: number[] }> = {};
   const itemScoreMap: Record<string, { application: Record<string, number[]>, interview: Record<string, number[]>, character: Record<string, number[]> }> = {};
+  // Per-trait score map: traitScoreMap[candidate_id][trait_id] = scores[]
+  const traitScoreMap: Record<string, Record<string, number[]>> = {};
 
   candidates.forEach(c => {
     scoreMap[c.id] = { application: [], interview: [], character: [] };
     itemScoreMap[c.id] = { application: {}, interview: {}, character: {} };
+    traitScoreMap[c.id] = {};
+    (characterTraits || []).forEach(t => {
+      traitScoreMap[c.id][t.id] = [];
+    });
   });
 
   rawRatings.forEach(rating => {
@@ -99,6 +123,11 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
             itemScoreMap[rating.candidate_id][type][itemKey] = [];
           }
           itemScoreMap[rating.candidate_id][type][itemKey].push(rs.score);
+
+          // Track per-trait scores for individual trait columns
+          if (type === "character" && rs.trait_id && traitScoreMap[rating.candidate_id][rs.trait_id]) {
+            traitScoreMap[rating.candidate_id][rs.trait_id].push(rs.score);
+          }
         }
       }
     });
@@ -143,13 +172,70 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
     const intData = processCategory(scoreMap[c.id].interview, itemScoreMap[c.id].interview);
     const charData = processCategory(scoreMap[c.id].character, itemScoreMap[c.id].character);
 
-    // Compute composite if all three have averages (or if you want to allow partial composites, adjust here)
+    // Compute per-trait averages with outlier filtering
+    const perTraitScores: TraitScore[] = (characterTraits || []).map(trait => {
+      const scores = traitScoreMap[c.id][trait.id] || [];
+      if (scores.length === 0) {
+        return { trait_id: trait.id, trait_name: trait.trait_name, average: null, rawScores: [], outliers: [] };
+      }
+      const m = mean(scores);
+      const s = stdev(scores);
+      const outliers: number[] = [];
+      const valid: number[] = [];
+      scores.forEach(score => {
+        if (s > 0 && Math.abs(score - m) > (stdThreshold * s)) {
+          outliers.push(score);
+        } else {
+          valid.push(score);
+        }
+      });
+      const avg = valid.length > 0 ? mean(valid) : mean(scores);
+      return { trait_id: trait.id, trait_name: trait.trait_name, average: avg, rawScores: scores, outliers };
+    });
+
+    // Compute composite
+    // If trait weights are configured (sum > 0), use weighted trait averages for character portion.
+    // Otherwise, fall back to flat character average * character_weight.
     let composite = null;
-    if (appData.average !== null && intData.average !== null && charData.average !== null) {
-      composite = 
-        (appData.average * settings.application_weight) + 
-        (intData.average * settings.interview_weight) + 
-        (charData.average * settings.character_weight);
+    if (appData.average !== null && intData.average !== null) {
+      const appPart = appData.average * settings.application_weight;
+      const intPart = intData.average * settings.interview_weight;
+
+      // Check if trait weights are configured
+      const traitWeightSum = (characterTraits || []).reduce((sum, t) => sum + (Number(t.weight) || 0), 0);
+      const hasTraitWeights = traitWeightSum > 0.001;
+
+      let charPart: number | null = null;
+      if (hasTraitWeights) {
+        // Use per-trait weighted averages
+        // Each trait's weight is an absolute decimal (e.g., 0.15 means 15% of total composite)
+        let traitComposite = 0;
+        let allTraitsHaveData = true;
+        for (const traitScore of perTraitScores) {
+          const traitDef = (characterTraits || []).find(t => t.id === traitScore.trait_id);
+          const traitWeight = Number(traitDef?.weight) || 0;
+          if (traitWeight > 0) {
+            if (traitScore.average !== null) {
+              traitComposite += traitScore.average * traitWeight;
+            } else {
+              allTraitsHaveData = false;
+              break;
+            }
+          }
+        }
+        if (allTraitsHaveData) {
+          charPart = traitComposite;
+        }
+      } else {
+        // Fall back to flat character average
+        if (charData.average !== null) {
+          charPart = charData.average * settings.character_weight;
+        }
+      }
+
+      if (charPart !== null) {
+        composite = appPart + intPart + charPart;
+      }
     }
 
     return {
@@ -161,6 +247,7 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
       application: appData,
       interview: intData,
       character: charData,
+      characterTraits: perTraitScores,
       composite_score: composite ? Number(composite.toFixed(2)) : null,
     };
   });

@@ -34,7 +34,7 @@ const BASE_TARGET_OPTIONS: { value: MappingTarget; label: string }[] = [
   { value: "first_name", label: "Candidate First Name" },
   { value: "last_name", label: "Candidate Last Name" },
   { value: "full_name", label: "Candidate Full Name" },
-  { value: "question", label: "Score Question (1-10)" },
+  { value: "question", label: "Score (create new question)" },
 ];
 
 function guessMapping(header: string): MappingTarget {
@@ -111,12 +111,14 @@ export function LegacyCsvImporter({ cohortId, cohortLabel, existingQuestions, ex
     if (file) handleFile(file);
   }, [handleFile]);
 
-  const updateMapping = (index: number, target: MappingTarget) => {
-    setMappings((prev) => prev.map((m, i) => (i === index ? { ...m, target, questionId: undefined } : m)));
-  };
-
-  const updateQuestionMapping = (index: number, questionId: string) => {
-    setMappings((prev) => prev.map((m, i) => (i === index ? { ...m, questionId: questionId || undefined } : m)));
+  const updateMapping = (index: number, value: string) => {
+    // value can be a base target (skip, voter_name, etc.) or "question" (create new) or "q_<id>" (existing question/trait)
+    if (value.startsWith("q_")) {
+      const questionId = value.replace("q_", "");
+      setMappings((prev) => prev.map((m, i) => (i === index ? { ...m, target: "question" as MappingTarget, questionId } : m)));
+    } else {
+      setMappings((prev) => prev.map((m, i) => (i === index ? { ...m, target: value as MappingTarget, questionId: undefined } : m)));
+    }
   };
 
   const handleImport = async () => {
@@ -210,53 +212,49 @@ export function LegacyCsvImporter({ cohortId, cohortLabel, existingQuestions, ex
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">CSV Column</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Sample Data</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Map To</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                  {ratingType === "character" ? "Trait" : "Question"}
-                </th>
               </tr>
             </thead>
             <tbody>
-              {mappings.map((m, i) => (
-                <tr key={i} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3 font-medium max-w-[200px]">
-                    <span className="line-clamp-2" title={m.header}>{m.header}</span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">{rows[0]?.[i] ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={m.target}
-                      onChange={(e) => updateMapping(i, e.target.value as MappingTarget)}
-                      className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                    >
-                      {BASE_TARGET_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    {m.target === "question" && hasExistingItems ? (
+              {mappings.map((m, i) => {
+                // Determine the select value
+                const selectValue = m.target === "question" && m.questionId
+                  ? `q_${m.questionId}`
+                  : m.target;
+
+                return (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    <td className="px-4 py-3 font-medium max-w-[200px]">
+                      <span className="line-clamp-2" title={m.header}>{m.header}</span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">{rows[0]?.[i] ?? "—"}</td>
+                    <td className="px-4 py-3">
                       <select
-                        value={m.questionId || ""}
-                        onChange={(e) => updateQuestionMapping(i, e.target.value)}
+                        value={selectValue}
+                        onChange={(e) => updateMapping(i, e.target.value)}
                         className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                       >
-                        <option value="">— Create New —</option>
-                        {items.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.text.length > 50 ? item.text.substring(0, 50) + "…" : item.text}
+                        {BASE_TARGET_OPTIONS.filter(opt => opt.value !== "question").map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
                           </option>
                         ))}
+                        {hasExistingItems && (
+                          <optgroup label={`— ${ratingType === "character" ? "Character Traits" : ratingType === "application" ? "Application Questions" : "Interview Questions"} —`}>
+                            {items.map((item) => (
+                              <option key={item.id} value={`q_${item.id}`}>
+                                {item.text.length > 60 ? item.text.substring(0, 60) + "…" : item.text}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        <optgroup label="— Other —">
+                          <option value="question">Score (create new question)</option>
+                        </optgroup>
                       </select>
-                    ) : m.target === "question" ? (
-                      <span className="text-xs text-muted-foreground italic">Will create new</span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

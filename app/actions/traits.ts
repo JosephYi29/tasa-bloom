@@ -10,18 +10,22 @@ export async function createTrait(cohortId: string, traitName: string, traitOrde
 
   const supabase = await createAdminClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("character_traits")
     .insert({
       cohort_id: cohortId,
       trait_name: traitName,
       trait_order: traitOrder,
-    });
+      weight: 0,
+    })
+    .select("id, trait_name, trait_order, weight")
+    .single();
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/protected/admin/evaluation");
-  return { success: true };
+  revalidatePath("/protected/admin/results");
+  return { success: true, trait: data };
 }
 
 export async function updateTrait(id: string, traitName: string, traitOrder: number) {
@@ -41,6 +45,7 @@ export async function updateTrait(id: string, traitName: string, traitOrder: num
   if (error) throw new Error(error.message);
 
   revalidatePath("/protected/admin/evaluation");
+  revalidatePath("/protected/admin/results");
   return { success: true };
 }
 
@@ -58,5 +63,25 @@ export async function deleteTrait(id: string) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/protected/admin/evaluation");
+  revalidatePath("/protected/admin/results");
+  return { success: true };
+}
+
+export async function saveTraitWeights(traitWeights: { id: string; weight: number }[]) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) throw new Error("Unauthorized");
+
+  const supabase = await createAdminClient();
+
+  for (const tw of traitWeights) {
+    const { error } = await supabase
+      .from("character_traits")
+      .update({ weight: tw.weight })
+      .eq("id", tw.id);
+
+    if (error) throw new Error(error.message);
+  }
+
+  revalidatePath("/protected/admin/results");
   return { success: true };
 }

@@ -1,9 +1,14 @@
 import { CsvImporter } from "@/components/csv-importer";
 import { LegacyCsvImporter } from "@/components/legacy-csv-importer";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/authUtils";
+import { redirect } from "next/navigation";
 
 export default async function ImportPage() {
-  const supabase = await createClient();
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) redirect("/protected");
+
+  const supabase = await createAdminClient();
 
   const { data: activeCohort } = await supabase
     .from("cohorts")

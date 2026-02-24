@@ -26,14 +26,20 @@ export function TraitManager({ cohortId, initialTraits }: { cohortId: string, in
     setLoading(true);
     try {
       const order = traits.length > 0 ? Math.max(...traits.map(t => t.trait_order)) + 1 : 1;
-      await createTrait(cohortId, newTraitName.trim(), order);
-      window.location.reload(); // Quick refresh to get new ID from server
+      const result = await createTrait(cohortId, newTraitName.trim(), order);
+      if (result.trait) {
+        setTraits(prev => [...prev, {
+          id: result.trait.id,
+          trait_name: result.trait.trait_name,
+          trait_order: result.trait.trait_order,
+        }]);
+      }
+      setNewTraitName("");
     } catch (error) {
       console.error(error);
       alert("Failed to create trait.");
     } finally {
       setLoading(false);
-      setNewTraitName("");
     }
   };
 

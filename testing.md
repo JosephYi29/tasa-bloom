@@ -157,15 +157,15 @@ Admins can mark application/interview questions as non-scorable (info-only) so t
 7. **Re-enable:** Toggle the question back on. It should reappear in the voting view with a score input.
 
 ## 13. Test Legacy Import Question Mapping (Feature)
-When importing legacy voting data, admins can map each score column to an existing question or trait instead of auto-creating new ones.
+When importing legacy voting data, admins can map each score column directly to an existing question or trait.
 
 1. As an admin, go to **Import Candidates**.
 2. Scroll to **Historical Voting Data** section. Select a rating phase (Application/Interview/Character).
 3. Upload a legacy CSV file with score columns.
-4. On the mapping screen, a **4th column** labeled "Question" (or "Trait") should appear.
-5. For columns mapped as "Score Question (1-10)", a **dropdown** should show all existing questions/traits for that phase.
-6. **Map to Existing:** Select an existing question from the dropdown for each score column. A banner should indicate how many existing items were found.
-7. **Create New:** Leave the dropdown on "— Create New —" if no matching question exists. It will create a new question from the CSV header.
+4. On the mapping screen, each CSV column has a single **"Map To"** dropdown.
+5. The dropdown should show base options (Skip, Voter Name, Candidate names) and an **optgroup** listing all existing questions/traits for the selected phase.
+6. **Map to Existing:** Select an existing question directly from the dropdown for each score column.
+7. **Create New:** Select "Score (create new question)" under the "Other" group if no matching question exists.
 8. **Preview:** Click "Preview Import". The summary should show how many are "mapped to existing" vs "will create new".
 9. **Import:** Complete the import. Go to **Evaluation** → **Application** tab and verify no duplicate questions were created.
 
@@ -180,3 +180,34 @@ The voting results page now shows a "Consistency" percentage instead of a triang
 6. Hover the triangle on a low-consistency row — it should show "X of Y scores flagged as outliers".
 7. Click a candidate to view their detail page — the outlier count should **match** the consistency percentage on the list page.
 8. **Export CSV:** Click "Export CSV". The downloaded file should include a "Consistency %" column.
+
+## 15. Test Per-Trait Character Weights (Feature)
+Admins can distribute the Character weight across individual traits.
+
+1. As an admin, go to **Results** and expand the **Scoring Configuration** collapsible.
+2. You should see three cards in a row: **Category Weights**, **Character Trait Weights**, and **Analytics Settings**.
+3. The Character Trait Weights card should list each active character trait with a percentage input.
+4. The progress bar at the bottom should show how close the sum is to the Character category weight.
+5. **Validation:** Try entering trait weights that don't sum to the Character weight. The "Save Settings" button should be disabled.
+6. **Save:** Set trait weights that sum correctly (e.g., if Character is 25%, set Leadership 10%, Drive 10%, Character 5%). Click **Save Settings**.
+7. Verify the composite scores in the results table update to reflect the weighted trait calculation.
+
+## 16. Test Outlier Toggle on Results Table (Feature)
+The results table has a toggle to include/exclude outlier scores.
+
+1. As an admin, go to **Results**.
+2. Find the **Include Outliers** toggle button in the table toolbar (next to search and export).
+3. By default, the toggle should be OFF (outlier-filtered averages shown).
+4. **Toggle On:** Click the toggle. Scores should change to show raw averages (including outlier scores). The **Consistency** column should disappear.
+5. **Toggle Off:** Click again. Scores should return to filtered averages and the Consistency column should reappear.
+
+## 17. Test Question Rename in Evaluation (Feature)
+Admins can rename application and interview questions directly in the Evaluation config.
+
+1. As an admin, go to **Evaluation** in the Admin sidebar.
+2. Click the **Application** or **Interview** tab.
+3. Each question row should show a **pencil icon** (always visible, not hidden behind hover).
+4. Click the pencil icon next to any question. The row should enter inline edit mode with a text input.
+5. Type a new name and click the **green checkmark** to save.
+6. The question should update immediately without a page reload.
+7. Click the **X** to cancel an edit — the original name should remain.

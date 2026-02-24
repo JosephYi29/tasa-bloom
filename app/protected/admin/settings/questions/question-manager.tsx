@@ -138,14 +138,12 @@ export function QuestionManager({ cohortId, initialQuestions, category }: { coho
                           disabled={togglingId === q.id}
                         />
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity focus-within:opacity-100">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setEditingId(q.id); setEditValue(q.question_text); }} disabled={loading}>
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(q.id)} disabled={loading}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setEditingId(q.id); setEditValue(q.question_text); }} disabled={loading} title="Rename question">
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10 opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity" onClick={() => handleDelete(q.id)} disabled={loading} title="Delete question">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </>
                 )}

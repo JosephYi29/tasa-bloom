@@ -13,24 +13,33 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Download, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Download, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, Filter, FilterX } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-type SortKey = 'composite' | 'application' | 'interview' | 'character' | 'consistency' | 'candidate' | 'candidateNumber' | null;
+interface Trait {
+  id: string;
+  trait_name: string;
+  trait_order: number;
+}
+
+type SortKey = 'composite' | 'application' | 'interview' | 'character' | 'consistency' | 'candidate' | 'candidateNumber' | `trait_${string}` | null;
 type SortDir = 'asc' | 'desc';
 
 export function ResultsClient({ 
   data, 
   topN, 
-  activeCohort 
+  activeCohort,
+  traits 
 }: { 
   data: ScoredCandidate[], 
   topN: number,
-  activeCohort: { term: string, year: number }
+  activeCohort: { term: string, year: number },
+  traits: Trait[]
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [includeOutliers, setIncludeOutliers] = useState(false);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -47,6 +56,33 @@ export function ResultsClient({
     const totalScores = c.application.rawScores.length + c.interview.rawScores.length + c.character.rawScores.length;
     const totalOutliers = c.application.outliers.length + c.interview.outliers.length + c.character.outliers.length;
     return totalScores > 0 ? Math.round(((totalScores - totalOutliers) / totalScores) * 100) : null;
+  };
+
+  const rawMean = (scores: number[]) => scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+
+  const getCategoryAvg = (cat: ScoredCandidate['application']) => {
+    if (includeOutliers) {
+      return rawMean(cat.rawScores);
+    }
+    return cat.average;
+  };
+
+  const getTraitAverage = (c: ScoredCandidate, traitId: string): number | null => {
+    const traitScore = c.characterTraits.find(t => t.trait_id === traitId);
+    if (!traitScore) return null;
+    if (includeOutliers) {
+      return rawMean(traitScore.rawScores);
+    }
+    return traitScore.average;
+  };
+
+  const getComposite = (c: ScoredCandidate): number | null => {
+    // When including outliers, we don't have a pre-computed value, so return the stored one
+    // (the toggle primarily affects the per-column averages display)
+    if (!includeOutliers) return c.composite_score;
+    // Recompute from raw averages - but we don't have weights client-side,
+    // so just return the stored composite (it's always outlier-filtered from server)
+    return c.composite_score;
   };
 
   const filteredData = useMemo(() => {
@@ -68,14 +104,22 @@ export function ResultsClient({
         // Numeric sorts
         let aVal: number | null = null;
         let bVal: number | null = null;
-        switch (sortKey) {
-          case 'candidateNumber': aVal = a.candidate_number ?? null; bVal = b.candidate_number ?? null; break;
-          case 'application': aVal = a.application.average; bVal = b.application.average; break;
-          case 'interview': aVal = a.interview.average; bVal = b.interview.average; break;
-          case 'character': aVal = a.character.average; bVal = b.character.average; break;
-          case 'composite': aVal = a.composite_score; bVal = b.composite_score; break;
-          case 'consistency': aVal = getConsistency(a); bVal = getConsistency(b); break;
+
+        if (sortKey.startsWith('trait_')) {
+          const traitId = sortKey.replace('trait_', '');
+          aVal = getTraitAverage(a, traitId);
+          bVal = getTraitAverage(b, traitId);
+        } else {
+          switch (sortKey) {
+            case 'candidateNumber': aVal = a.candidate_number ?? null; bVal = b.candidate_number ?? null; break;
+            case 'application': aVal = getCategoryAvg(a.application); bVal = getCategoryAvg(b.application); break;
+            case 'interview': aVal = getCategoryAvg(a.interview); bVal = getCategoryAvg(b.interview); break;
+            case 'character': aVal = getCategoryAvg(a.character); bVal = getCategoryAvg(b.character); break;
+            case 'composite': aVal = getComposite(a); bVal = getComposite(b); break;
+            case 'consistency': aVal = getConsistency(a); bVal = getConsistency(b); break;
+          }
         }
+
         // Nulls always go to the bottom
         if (aVal === null && bVal === null) return 0;
         if (aVal === null) return 1;
@@ -84,7 +128,7 @@ export function ResultsClient({
       });
     }
     return result;
-  }, [data, searchQuery, sortKey, sortDir]);
+  }, [data, searchQuery, sortKey, sortDir, includeOutliers]);
 
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
@@ -93,12 +137,21 @@ export function ResultsClient({
       : <ArrowUp className="w-3 h-3 ml-1" />;
   };
 
+  const hasTraits = traits.length > 0;
+
+  // Total number of columns for empty state colspan
+  // Base: # + Candidate + Application + Interview + Character(Avg) + Composite = 6
+  // Plus one per trait, plus Consistency (only when not including outliers)
+  const totalCols = 6 + traits.length + (includeOutliers ? 0 : 1);
+
   const handleExportCSV = () => {
     if (!data.length) return;
 
     const headers = [
       "Rank", "Candidate ID", "First Name", "Last Name", "Email", 
-      "Application Avg", "Interview Avg", "Character Avg", "Composite Score", "Consistency %"
+      "Application Avg", "Interview Avg",
+      ...traits.map(t => `${t.trait_name} Avg`),
+      "Character Avg", "Composite Score", "Consistency %"
     ];
 
     const rows = data.map((c, index) => {
@@ -106,16 +159,24 @@ export function ResultsClient({
       const totalOutliers = c.application.outliers.length + c.interview.outliers.length + c.character.outliers.length;
       const consistency = totalScores > 0 ? Math.round(((totalScores - totalOutliers) / totalScores) * 100) : "N/A";
       
+      const appAvg = getCategoryAvg(c.application);
+      const intAvg = getCategoryAvg(c.interview);
+      const charAvg = getCategoryAvg(c.character);
+
       return [
         index + 1,
         c.candidate_number || c.candidate_id,
         c.first_name,
         c.last_name,
         c.email || "",
-        c.application.average?.toFixed(2) || "N/A",
-        c.interview.average?.toFixed(2) || "N/A",
-        c.character.average?.toFixed(2) || "N/A",
-        c.composite_score?.toFixed(2) || "N/A",
+        appAvg !== null ? appAvg.toFixed(2) : "N/A",
+        intAvg !== null ? intAvg.toFixed(2) : "N/A",
+        ...traits.map(t => {
+          const avg = getTraitAverage(c, t.id);
+          return avg !== null ? avg.toFixed(2) : "N/A";
+        }),
+        charAvg !== null ? charAvg.toFixed(2) : "N/A",
+        getComposite(c)?.toFixed(2) || "N/A",
         consistency
       ];
     });
@@ -148,20 +209,37 @@ export function ResultsClient({
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button onClick={handleExportCSV} variant="outline" className="shrink-0 gap-2">
-          <Download className="w-4 h-4" />
-          Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() => setIncludeOutliers(!includeOutliers)}
+                variant={includeOutliers ? "default" : "outline"}
+                className="shrink-0 gap-2"
+              >
+                {includeOutliers ? <FilterX className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+                {includeOutliers ? "Outliers Included" : "Outliers Excluded"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{includeOutliers ? "Currently showing raw averages (outliers included). Click to exclude outliers." : "Currently showing filtered averages (outliers excluded). Click to include outliers."}</p>
+            </TooltipContent>
+          </Tooltip>
+          <Button onClick={handleExportCSV} variant="outline" className="shrink-0 gap-2">
+            <Download className="w-4 h-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px] text-center cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('candidateNumber')}>
+              <TableHead className="w-[60px] text-center cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('candidateNumber')}>
                 <span className="inline-flex items-center">#<SortIcon column="candidateNumber" /></span>
               </TableHead>
-              <TableHead className="cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('candidate')}>
+              <TableHead className="cursor-pointer select-none hover:text-foreground transition-colors min-w-[140px]" onClick={() => handleSort('candidate')}>
                 <span className="inline-flex items-center">Candidate<SortIcon column="candidate" /></span>
               </TableHead>
               <TableHead className="text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('application')}>
@@ -170,28 +248,67 @@ export function ResultsClient({
               <TableHead className="text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('interview')}>
                 <span className="inline-flex items-center">Interview<SortIcon column="interview" /></span>
               </TableHead>
-              <TableHead className="text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('character')}>
-                <span className="inline-flex items-center">Character<SortIcon column="character" /></span>
-              </TableHead>
+              {hasTraits ? (
+                <>
+                  {traits.map(trait => (
+                    <TableHead 
+                      key={trait.id}
+                      className="text-right cursor-pointer select-none hover:text-foreground transition-colors"
+                      onClick={() => handleSort(`trait_${trait.id}`)}
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center cursor-help">
+                            {trait.trait_name}
+                            <SortIcon column={`trait_${trait.id}`} />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>Character trait: {trait.trait_name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('character')}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center cursor-help">
+                          Char Avg
+                          <SortIcon column="character" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>Overall character average across all traits</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                </>
+              ) : (
+                <TableHead className="text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('character')}>
+                  <span className="inline-flex items-center">Character<SortIcon column="character" /></span>
+                </TableHead>
+              )}
               <TableHead className="text-right font-bold cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('composite')}>
                 <span className="inline-flex items-center">Composite<SortIcon column="composite" /></span>
               </TableHead>
-              <TableHead className="text-center w-[100px] cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('consistency')}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center cursor-help">Consistency<SortIcon column="consistency" /></span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p>Percentage of scores within the normal range (not flagged as outliers)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TableHead>
+              {!includeOutliers && (
+                <TableHead className="text-center w-[100px] cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('consistency')}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center cursor-help">Consistency<SortIcon column="consistency" /></span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>Percentage of scores within the normal range (not flagged as outliers)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={totalCols} className="text-center py-8 text-muted-foreground">
                   No candidates found for this cohort or matching search.
                 </TableCell>
               </TableRow>
@@ -230,46 +347,62 @@ export function ResultsClient({
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {candidate.application.average !== null ? candidate.application.average.toFixed(2) : "-"}
+                      {(() => { const v = getCategoryAvg(candidate.application); return v !== null ? v.toFixed(2) : "-"; })()}
                     </TableCell>
                     <TableCell className="text-right">
-                      {candidate.interview.average !== null ? candidate.interview.average.toFixed(2) : "-"}
+                      {(() => { const v = getCategoryAvg(candidate.interview); return v !== null ? v.toFixed(2) : "-"; })()}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {candidate.character.average !== null ? candidate.character.average.toFixed(2) : "-"}
-                    </TableCell>
+                    {hasTraits ? (
+                      <>
+                        {traits.map(trait => {
+                          const avg = getTraitAverage(candidate, trait.id);
+                          return (
+                            <TableCell key={trait.id} className="text-right">
+                              {avg !== null ? avg.toFixed(2) : "-"}
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell className="text-right text-muted-foreground">
+                          {(() => { const v = getCategoryAvg(candidate.character); return v !== null ? v.toFixed(2) : "-"; })()}
+                        </TableCell>
+                      </>
+                    ) : (
+                      <TableCell className="text-right">
+                        {(() => { const v = getCategoryAvg(candidate.character); return v !== null ? v.toFixed(2) : "-"; })()}
+                      </TableCell>
+                    )}
                     <TableCell className="text-right font-bold">
-                      {candidate.composite_score !== null ? candidate.composite_score.toFixed(2) : (
-                        <span className="text-muted-foreground font-normal text-sm">Pending</span>
-                      )}
+                      {(() => { const v = getComposite(candidate); return v !== null ? v.toFixed(2) : (<span className="text-muted-foreground font-normal text-sm">Pending</span>); })()}
                     </TableCell>
-                    <TableCell className="text-center">
-                      {consistency !== null ? (
-                        <div className="flex items-center justify-center gap-1">
-                          {isLowConsistency && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="cursor-help">
-                                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">
-                                <p>{totalOutliers} of {totalScores} scores flagged as outliers</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                          <span className={`text-sm tabular-nums ${
-                            isLowConsistency 
-                              ? "text-amber-600 dark:text-amber-400 font-medium" 
-                              : "text-muted-foreground"
-                          }`}>
-                            {consistency}%
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
+                    {!includeOutliers && (
+                      <TableCell className="text-center">
+                        {consistency !== null ? (
+                          <div className="flex items-center justify-center gap-1">
+                            {isLowConsistency && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="cursor-help">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <p>{totalOutliers} of {totalScores} scores flagged as outliers</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                            <span className={`text-sm tabular-nums ${
+                              isLowConsistency 
+                                ? "text-amber-600 dark:text-amber-400 font-medium" 
+                                : "text-muted-foreground"
+                            }`}>
+                              {consistency}%
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })
@@ -280,7 +413,7 @@ export function ResultsClient({
       
       {topN > 0 && data.length > 0 && (
         <div className="text-sm text-muted-foreground text-right mt-2">
-          Highlighting the top {topN} candidates. Adjust in the <span className="underline cursor-pointer" onClick={() => { const el = document.querySelector('[data-value="weights"]') as HTMLElement; el?.click(); }}>Scoring Config</span> tab.
+          Highlighting the top {topN} candidates. Adjust in the Scoring Configuration section above.
         </div>
       )}
     </div>

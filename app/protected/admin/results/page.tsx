@@ -32,6 +32,13 @@ export default async function AdminResultsPage() {
     );
   }
 
+  // Fetch character traits for this cohort
+  const { data: traits } = await supabase
+    .from("character_traits")
+    .select("id, trait_name, trait_order, weight")
+    .eq("cohort_id", activeCohort.id)
+    .order("trait_order", { ascending: true });
+
   // Fetch and compute scores
   const results = await computeScoresForCohort(supabase, activeCohort.id);
 
@@ -59,7 +66,7 @@ export default async function AdminResultsPage() {
   const topN = settings?.top_n_display ?? 20;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Voting Results</h1>
@@ -75,6 +82,7 @@ export default async function AdminResultsPage() {
         topN={topN}
         activeCohort={activeCohort}
         weightsSettings={settings}
+        traits={traits || []}
       />
     </div>
   );

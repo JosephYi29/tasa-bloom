@@ -106,10 +106,10 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
               .sort((a, b) => ((a.question as { question_order?: number })?.question_order ?? 0) - ((b.question as { question_order?: number })?.question_order ?? 0))
               .map((r) => (
                 <div key={r.id} className="p-4 space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-l-2 border-primary/40 pl-2">
                     {(r.question as { question_text?: string })?.question_text || "Unknown Question"}
                   </p>
-                  <p className="text-sm whitespace-pre-wrap">{r.response_text || "—"}</p>
+                  <p className="text-sm whitespace-pre-wrap pl-3 py-1">{r.response_text || "—"}</p>
                 </div>
               ))}
           </div>
@@ -127,10 +127,10 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
               .sort((a, b) => ((a.question as { question_order?: number })?.question_order ?? 0) - ((b.question as { question_order?: number })?.question_order ?? 0))
               .map((r) => (
                 <div key={r.id} className="p-4 space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-l-2 border-primary/40 pl-2">
                     {(r.question as { question_text?: string })?.question_text || "Unknown Question"}
                   </p>
-                  <p className="text-sm whitespace-pre-wrap">{r.response_text || "—"}</p>
+                  <p className="text-sm whitespace-pre-wrap pl-3 py-1">{r.response_text || "—"}</p>
                 </div>
               ))}
           </div>
