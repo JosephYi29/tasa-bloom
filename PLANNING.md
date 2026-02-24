@@ -388,6 +388,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] **Legacy Import Question Mapping**: Updated the legacy CSV importer to show a dropdown of existing questions/traits when mapping score columns, instead of always creating new ones from CSV headers. Prevents duplicate questions when imported data uses simplified column names (e.g., "Q1" vs full question text). Server action accepts explicit question ID overrides.
 - [x] **Admin Tab Restructuring**: Moved scoring weights from Settings into the Results page as a "Scoring Config" tab. Created a new top-level "Evaluation" admin tab (`/protected/admin/evaluation`) combining character traits, application questions, and interview questions in a single 3-tab layout. These are all per-cohort configs. Settings page now only contains Board Positions (which are global). Updated sidebar with new "Evaluation" link.
 - [x] **Dev Script Auto-Clean**: Updated `npm run dev` script to automatically clear stale `.next` cache before starting Turbopack, preventing build manifest errors after route changes.
+- [x] **Sortable Results Table**: Renamed results table column headers from abbreviated ("App Avg", "Int Avg", "Char Avg") to full names ("Application", "Interview", "Character"). Made all column headers clickable for sorting — click cycles through descending → ascending → reset. Added sortable columns for candidate name (alphabetical) and candidate number. Top-N highlighting only applies when viewing default rank order. Sorting is memoized with `useMemo` for performance.
 
 ---
 

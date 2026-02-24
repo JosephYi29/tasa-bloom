@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ScoredCandidate } from "@/lib/scoring";
 import {
@@ -13,8 +13,11 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Download, Search, AlertTriangle } from "lucide-react";
+import { Download, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+type SortKey = 'composite' | 'application' | 'interview' | 'character' | 'consistency' | 'candidate' | 'candidateNumber' | null;
+type SortDir = 'asc' | 'desc';
 
 export function ResultsClient({ 
   data, 
@@ -26,11 +29,69 @@ export function ResultsClient({
   activeCohort: { term: string, year: number }
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  const filteredData = data.filter(c => 
-    c.first_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.last_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      if (sortDir === 'desc') setSortDir('asc');
+      else { setSortKey(null); setSortDir('desc'); } // third click resets
+    } else {
+      setSortKey(key);
+      // Text columns default to ascending, numeric to descending
+      setSortDir(key === 'candidate' ? 'asc' : 'desc');
+    }
+  };
+
+  const getConsistency = (c: ScoredCandidate) => {
+    const totalScores = c.application.rawScores.length + c.interview.rawScores.length + c.character.rawScores.length;
+    const totalOutliers = c.application.outliers.length + c.interview.outliers.length + c.character.outliers.length;
+    return totalScores > 0 ? Math.round(((totalScores - totalOutliers) / totalScores) * 100) : null;
+  };
+
+  const filteredData = useMemo(() => {
+    let result = data.filter(c => 
+      c.first_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.last_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (sortKey) {
+      result = [...result].sort((a, b) => {
+        // String-based sorts
+        if (sortKey === 'candidate') {
+          const aName = a.first_name.toLowerCase();
+          const bName = b.first_name.toLowerCase();
+          const cmp = aName.localeCompare(bName);
+          return sortDir === 'asc' ? cmp : -cmp;
+        }
+
+        // Numeric sorts
+        let aVal: number | null = null;
+        let bVal: number | null = null;
+        switch (sortKey) {
+          case 'candidateNumber': aVal = a.candidate_number ?? null; bVal = b.candidate_number ?? null; break;
+          case 'application': aVal = a.application.average; bVal = b.application.average; break;
+          case 'interview': aVal = a.interview.average; bVal = b.interview.average; break;
+          case 'character': aVal = a.character.average; bVal = b.character.average; break;
+          case 'composite': aVal = a.composite_score; bVal = b.composite_score; break;
+          case 'consistency': aVal = getConsistency(a); bVal = getConsistency(b); break;
+        }
+        // Nulls always go to the bottom
+        if (aVal === null && bVal === null) return 0;
+        if (aVal === null) return 1;
+        if (bVal === null) return -1;
+        return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
+      });
+    }
+    return result;
+  }, [data, searchQuery, sortKey, sortDir]);
+
+  const SortIcon = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortDir === 'desc' 
+      ? <ArrowDown className="w-3 h-3 ml-1" /> 
+      : <ArrowUp className="w-3 h-3 ml-1" />;
+  };
 
   const handleExportCSV = () => {
     if (!data.length) return;
@@ -97,16 +158,28 @@ export function ResultsClient({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px] text-center">Rank</TableHead>
-              <TableHead>Candidate</TableHead>
-              <TableHead className="text-right">App Avg</TableHead>
-              <TableHead className="text-right">Int Avg</TableHead>
-              <TableHead className="text-right">Char Avg</TableHead>
-              <TableHead className="text-right font-bold">Composite</TableHead>
-              <TableHead className="text-center w-[100px]">
+              <TableHead className="w-[80px] text-center cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('candidateNumber')}>
+                <span className="inline-flex items-center">#<SortIcon column="candidateNumber" /></span>
+              </TableHead>
+              <TableHead className="cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('candidate')}>
+                <span className="inline-flex items-center">Candidate<SortIcon column="candidate" /></span>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('application')}>
+                <span className="inline-flex items-center">Application<SortIcon column="application" /></span>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('interview')}>
+                <span className="inline-flex items-center">Interview<SortIcon column="interview" /></span>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('character')}>
+                <span className="inline-flex items-center">Character<SortIcon column="character" /></span>
+              </TableHead>
+              <TableHead className="text-right font-bold cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('composite')}>
+                <span className="inline-flex items-center">Composite<SortIcon column="composite" /></span>
+              </TableHead>
+              <TableHead className="text-center w-[100px] cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('consistency')}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="cursor-help">Consistency</span>
+                    <span className="inline-flex items-center cursor-help">Consistency<SortIcon column="consistency" /></span>
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     <p>Percentage of scores within the normal range (not flagged as outliers)</p>
@@ -124,18 +197,15 @@ export function ResultsClient({
               </TableRow>
             ) : (
               filteredData.map((candidate, index) => {
-                const isTopN = index < topN && candidate.composite_score !== null;
+                const isTopN = !sortKey && index < topN && candidate.composite_score !== null;
                 
-                // Compute consistency: % of scores within normal range
+                const consistency = getConsistency(candidate);
                 const totalScores = candidate.application.rawScores.length + 
                                     candidate.interview.rawScores.length + 
                                     candidate.character.rawScores.length;
                 const totalOutliers = candidate.application.outliers.length + 
                                       candidate.interview.outliers.length + 
                                       candidate.character.outliers.length;
-                const consistency = totalScores > 0 
-                  ? Math.round(((totalScores - totalOutliers) / totalScores) * 100) 
-                  : null;
                 const isLowConsistency = consistency !== null && consistency < 80;
 
                 return (

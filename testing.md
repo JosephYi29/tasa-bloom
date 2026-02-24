@@ -93,6 +93,9 @@ Now, let's verify the automatic scoring engine and export features.
 5. Set your **Outlier Threshold** (default is 2.0). 
 6. Click the **Leaderboard** tab.
 7. Here you will see the full ranked list of candidates by their **Composite Score**. You can view how they scored via their categorized averages.
+   * **Sort by Column:** Click any column header (#, Candidate, Application, Interview, Character, Composite, Consistency) to sort the table. First click sorts descending (ascending for Candidate name), second click reverses, third click resets to default rank order. A small arrow icon indicates the active sort direction.
+   * **Sort by Name:** Click the **Candidate** header to sort alphabetically by first name.
+   * **Sort by Number:** Click the **#** header to sort by candidate number.
 8. Click into any Candidate's name to view their **Candidate Details**. Look at the breakdowns for Application, Interview, and Character ratings. Notice how standard deviations inform the Adjusted Average to avoid extreme feedback outliers!
 9. Back in the Results page, hit the **Export CSV** to safely download the results locally onto your computer in the `.csv` format.
 
