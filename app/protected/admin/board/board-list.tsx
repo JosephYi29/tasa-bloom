@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Trash2, UserPlus } from "lucide-react";
@@ -59,6 +60,11 @@ export function BoardList({
   const [removeLoading, setRemoveLoading] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [memberState, setMemberState] = useState<BoardMember[]>(members);
+  const router = useRouter();
+
+  useEffect(() => {
+    setMemberState(members);
+  }, [members]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +76,7 @@ export function BoardList({
       setOpen(false);
       setSelectedProfile("");
       setSelectedPosition("");
+      router.refresh();
     } catch (err: unknown) {
       alert(`Error: ${(err as Error).message}`);
     } finally {
@@ -83,6 +90,7 @@ export function BoardList({
     setRemoveLoading(userId);
     try {
       await removeBoardMember(userId);
+      router.refresh();
     } catch (err: unknown) {
       alert(`Error: ${(err as Error).message}`);
     } finally {

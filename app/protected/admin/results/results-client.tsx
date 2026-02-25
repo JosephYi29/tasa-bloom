@@ -76,6 +76,56 @@ export function ResultsClient({
     return traitScore.average;
   };
 
+  // Compute per-column min/max for color gradient
+  const columnRanges = useMemo(() => {
+    const ranges: Record<string, { min: number; max: number }> = {};
+    const cols = ['application', 'interview', 'character', ...traits.map(t => `trait_${t.id}`)];
+    cols.forEach(col => {
+      const values: number[] = [];
+      data.forEach(c => {
+        let v: number | null = null;
+        if (col === 'application') v = getCategoryAvg(c.application);
+        else if (col === 'interview') v = getCategoryAvg(c.interview);
+        else if (col === 'character') v = getCategoryAvg(c.character);
+        else if (col.startsWith('trait_')) {
+          const traitId = col.replace('trait_', '');
+          v = getTraitAverage(c, traitId);
+        }
+        if (v !== null) values.push(v);
+      });
+      if (values.length > 0) {
+        ranges[col] = { min: Math.min(...values), max: Math.max(...values) };
+      }
+    });
+    return ranges;
+  }, [data, includeOutliers, traits]);
+
+  // Red (0°) → Yellow (45°) → Green (140°) via HSL — mini bar
+  const ScoreBar = ({ value, column, formatted }: { value: number | null; column: string; formatted: string }) => {
+    if (value === null) return <span>-</span>;
+    const range = columnRanges[column];
+    const hasRange = range && range.max !== range.min;
+    const ratio = hasRange ? (value - range.min) / (range.max - range.min) : 0.5;
+    const hue = ratio * 140;
+    const widthPct = Math.max(15, ratio * 100); // min 15% so lowest isn't invisible
+    return (
+      <div className="inline-flex flex-col items-end gap-0.5">
+        <span>{formatted}</span>
+        {hasRange && (
+          <div className="w-10 h-[3px] rounded-full bg-muted/40">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${widthPct}%`,
+                backgroundColor: `hsl(${hue}, 75%, 45%)`,
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const getComposite = (c: ScoredCandidate): number | null => {
     // When including outliers, we don't have a pre-computed value, so return the stored one
     // (the toggle primarily affects the per-column averages display)
@@ -346,29 +396,29 @@ export function ResultsClient({
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {(() => { const v = getCategoryAvg(candidate.application); return v !== null ? v.toFixed(2) : "-"; })()}
+                    <TableCell className="text-right tabular-nums">
+                      {(() => { const v = getCategoryAvg(candidate.application); return <ScoreBar value={v} column="application" formatted={v !== null ? v.toFixed(2) : "-"} />; })()}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {(() => { const v = getCategoryAvg(candidate.interview); return v !== null ? v.toFixed(2) : "-"; })()}
+                    <TableCell className="text-right tabular-nums">
+                      {(() => { const v = getCategoryAvg(candidate.interview); return <ScoreBar value={v} column="interview" formatted={v !== null ? v.toFixed(2) : "-"} />; })()}
                     </TableCell>
                     {hasTraits ? (
                       <>
                         {traits.map(trait => {
                           const avg = getTraitAverage(candidate, trait.id);
                           return (
-                            <TableCell key={trait.id} className="text-right">
-                              {avg !== null ? avg.toFixed(2) : "-"}
+                            <TableCell key={trait.id} className="text-right tabular-nums">
+                              <ScoreBar value={avg} column={`trait_${trait.id}`} formatted={avg !== null ? avg.toFixed(2) : "-"} />
                             </TableCell>
                           );
                         })}
-                        <TableCell className="text-right text-muted-foreground">
-                          {(() => { const v = getCategoryAvg(candidate.character); return v !== null ? v.toFixed(2) : "-"; })()}
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {(() => { const v = getCategoryAvg(candidate.character); return <ScoreBar value={v} column="character" formatted={v !== null ? v.toFixed(2) : "-"} />; })()}
                         </TableCell>
                       </>
                     ) : (
-                      <TableCell className="text-right">
-                        {(() => { const v = getCategoryAvg(candidate.character); return v !== null ? v.toFixed(2) : "-"; })()}
+                      <TableCell className="text-right tabular-nums">
+                        {(() => { const v = getCategoryAvg(candidate.character); return <ScoreBar value={v} column="character" formatted={v !== null ? v.toFixed(2) : "-"} />; })()}
                       </TableCell>
                     )}
                     <TableCell className="text-right font-bold">

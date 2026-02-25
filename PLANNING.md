@@ -186,6 +186,16 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] Manage application questions per cohort (add, edit, reorder, delete)
 - [x] **Dynamic Sorting**: Allow admins to easily sort the candidate table list numerically by Candidate Number.
 - [x] **Remap Candidate Order Feature**: Introduce an action button allowing admins to visually sort the table (e.g., alphabetically) and then automatically reassign all Candidate Numbers sequentially (1, 2, 3...) based on that new view.
+- [x] **Candidate Active/Inactive Toggle**: Admins can toggle individual candidates on/off (or bulk toggle all) from `/protected/admin/candidates`. Inactive candidates are hidden from voters and excluded from scoring but preserved in the database. Uses `is_active` column on `candidates` table (migration `18_add_candidate_is_active.sql`).
+- [x] **Candidate Detail Page** (`/protected/admin/candidates/[id]`): Created missing candidate detail route that was causing 404 errors when clicking "View" on the candidates list. Shows basic info, application responses, interview responses, and interview video link.
+- [x] **Candidate Detail Styling**: Improved the candidate detail page (`/protected/admin/candidates/[id]`) so questions are visually distinct from answers — questions now have a colored left border accent, uppercase label styling, and wider tracking.
+- [x] **DndContext Hydration Fix**: Fixed React hydration mismatch on the candidates page caused by `@dnd-kit`'s `DndContext` rendering a hidden `<div>` inside a `<table>`. Moved `DndContext` to wrap the table container and added `useId()` for stable accessibility IDs.
+- [x] **Question Scorable Toggle** (`/protected/admin/evaluation` → Application/Interview tabs): Added `is_scorable` column on `application_questions` (migration `21_add_question_is_scorable.sql`). Questions can be toggled as scorable or info-only via a Switch in the question manager. Non-scorable questions are completely hidden from voters during application and interview voting.
+- [x] **Question Rename Visibility**: Made the edit (pencil) button always visible on each question row in the Evaluation question manager, instead of hidden behind hover. Delete button remains hover-only for safety.
+- [x] **Legacy Import Question Mapping**: Updated the legacy CSV importer to show a dropdown of existing questions/traits when mapping score columns, instead of always creating new ones from CSV headers. Prevents duplicate questions when imported data uses simplified column names (e.g., "Q1" vs full question text).
+- [x] **Legacy Import Direct Question Mapping**: Reworked the CSV column mapping dropdown to show individual active questions/traits directly as selectable options (optgroup), eliminating the two-step mapping. Users can now pick specific questions in one click.
+- [x] **Import Page Auth Fix**: Fixed the Legacy CSV Importer not showing existing questions/traits in the mapping dropdown. The import page was using `createClient()` instead of `createAdminClient()`, causing RLS to block the query. Added admin auth guard.
+- [x] **Legacy Import COI Column Mapping**: Added "Conflict of Interest (Yes/No)" as a mappable column type in the legacy CSV importer. When the COI column value is "Yes", the voter's rating record is created (counts as voted) but all trait scores are skipped (doesn't affect candidate averages). Column headers containing "conflict of interest" or "coi" auto-map to this field. COI count is displayed in the import success message.
 
 ---
 
@@ -266,6 +276,7 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Save / Submit final rating (with AlertDialog confirmation)
   - [x] **Abstain Option**: Allow voters to explicitly "Abstain" from evaluating a candidate. This records their ballot as submitted (for voting progress tracking) but excludes their null scores from the candidate's average calculation entirely.
   - Note: This phase will *always* occur AFTER the Interview and Application phases, typically during an in-person group discussion. Admins will lock this phase until the earlier phases are complete.
+  - [x] **Trait Creation Bug Fix**: Fixed `trait-manager.tsx` so adding a character trait no longer causes a full page reload. `createTrait` server action now returns the created trait data, and the component updates state client-side, keeping the user on the Character Traits tab.
 
 ### Step 3.7: Voting Progress Tracker
 - [x] Dashboard showing the voter's progress: which candidates have been rated, which are pending
@@ -294,6 +305,9 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] **Board Member Progress**: See which board members have completed their ratings (per category)
 - [x] **Individual Vote Viewer**: View all scores submitted by a specific board member
 - [x] **Candidate Vote Breakdown**: View all individual scores for a specific candidate, broken down by voter
+- [x] **Board Position Management** (`/protected/admin/settings`): Admins can add new board positions and toggle existing positions active/inactive. Toggling a position off hides it from the position dropdown when assigning board memberships, but preserves all historical membership records for auditability. Uses `is_active` column on `board_positions` (migration `20_add_position_and_member_toggles.sql`). Settings page has a "Board Positions" tile linking to `/protected/admin/settings/positions`.
+- [x] **Board Member Availability Toggle** (`/protected/admin/board`): Admins can toggle individual board members as "available" or "unavailable" within a cohort. Unavailable members remain assigned to the board cohort (preserving their membership record) but are excluded from voting progress/status counts — so their inability to participate does not skew completion percentages or block voting phase completion tracking. Uses `is_available` column on `board_memberships` (migration `20_add_position_and_member_toggles.sql`). Board Admin page has a toggle switch per member row.
+- [x] **Admin Tab Restructuring**: Moved scoring weights from Settings into the Results page as a "Scoring Config" tab. Created a new top-level "Evaluation" admin tab (`/protected/admin/evaluation`) combining character traits, application questions, and interview questions in a single 3-tab layout. These are all per-cohort configs. Settings page now only contains Board Positions (which are global). Updated sidebar with new "Evaluation" link.
 
 ### Step 4.4: Admin — Lock/Unlock Voting Phases ✅
 - [x] Ability to open/close each voting phase independently:
@@ -341,6 +355,10 @@ CSV Headers → Map → Create/reuse `application_question` records
   - [x] Per-voter breakdown (admin only)
   - [x] Outlier flags
 - [x] **Statistical Summary**: Number of voters, response rate, score distributions
+- [x] **Results Consistency Column**: Replaced per-candidate outlier triangles with a "Consistency %" column on the results page. Shows percentage of scores within normal range. Warning triangle only appears when consistency drops below 80%. Fixed outlier detection to compute per-question/trait (matching the detail page) instead of pooling all scores in a category. Added consistency to CSV export.
+- [x] **Sortable Results Table**: Renamed results table column headers from abbreviated ("App Avg", "Int Avg", "Char Avg") to full names ("Application", "Interview", "Character"). Made all column headers clickable for sorting — click cycles through descending → ascending → reset. Added sortable columns for candidate name (alphabetical) and candidate number. Top-N highlighting only applies when viewing default rank order. Sorting is memoized with `useMemo` for performance.
+- [x] **Per-Trait Character Weights**: Added `weight` column to `character_traits` table (migration `22_add_trait_weights.sql`). New `saveTraitWeights` server action. WeightsForm displays a "Character Trait Weights" card inline with Category Weights and Analytics Settings in a 3-column grid. Trait weights must sum to the Character category weight. Scoring engine uses per-trait weighted averages for computing composite score when weights are configured; falls back to flat average otherwise.
+- [x] **Outlier Toggle on Results Table**: Added a toggle button to the results table toolbar to switch between outlier-filtered averages (default) and raw averages. When outliers are included, the Consistency column is hidden. Affects all score columns.
 
 ### Step 5.3: Export & Historical Logging
 - [x] **CSV Export**: Export full results table as CSV for archival
@@ -357,6 +375,7 @@ CSV Headers → Map → Create/reuse `application_question` records
   - **Admins** (additional): Candidates, Results, Board Management, Cohort Settings
 - [x] `<AdminNav />` component (conditionally rendered based on `isAdmin`)
 - [ ] Responsive design for tablet/mobile use during character eval meetings
+- [x] **Dev Script Auto-Clean**: Updated `npm run dev` script to automatically clear stale `.next` cache before starting Turbopack, preventing build manifest errors after route changes.
 
 ### Step 6.2: User Onboarding ✅
 - [x] Profile setup flow on first login (name, grad year)
@@ -378,26 +397,12 @@ CSV Headers → Map → Create/reuse `application_question` records
 
 ### Step 6.5: Backlog / Future Enhancements
 - [x] **Global Settings Page (`/protected/admin/settings`)**: A dedicated page for managing global configurations such as scoring weights, default character traits, notification settings, and other app-wide parameters that don't belong strictly to a single cohort.
-- [x] **Candidate Active/Inactive Toggle**: Admins can toggle individual candidates on/off (or bulk toggle all) from `/protected/admin/candidates`. Inactive candidates are hidden from voters and excluded from scoring but preserved in the database. Uses `is_active` column on `candidates` table (migration `18_add_candidate_is_active.sql`).
-- [x] **Board Position Management** (`/protected/admin/settings`): Admins can add new board positions and toggle existing positions active/inactive. Toggling a position off hides it from the position dropdown when assigning board memberships, but preserves all historical membership records for auditability. Uses `is_active` column on `board_positions` (migration `20_add_position_and_member_toggles.sql`). Settings page has a "Board Positions" tile linking to `/protected/admin/settings/positions`.
-- [x] **Board Member Availability Toggle** (`/protected/admin/board`): Admins can toggle individual board members as "available" or "unavailable" within a cohort. Unavailable members remain assigned to the board cohort (preserving their membership record) but are excluded from voting progress/status counts — so their inability to participate does not skew completion percentages or block voting phase completion tracking. Uses `is_available` column on `board_memberships` (migration `20_add_position_and_member_toggles.sql`). Board Admin page has a toggle switch per member row.
-- [x] **DndContext Hydration Fix**: Fixed React hydration mismatch on the candidates page caused by `@dnd-kit`'s `DndContext` rendering a hidden `<div>` inside a `<table>`. Moved `DndContext` to wrap the table container and added `useId()` for stable accessibility IDs.
-- [x] **Candidate Detail Page** (`/protected/admin/candidates/[id]`): Created missing candidate detail route that was causing 404 errors when clicking "View" on the candidates list. Shows basic info, application responses, interview responses, and interview video link.
-- [x] **Results Consistency Column**: Replaced per-candidate outlier triangles with a "Consistency %" column on the results page. Shows percentage of scores within normal range. Warning triangle only appears when consistency drops below 80%. Fixed outlier detection to compute per-question/trait (matching the detail page) instead of pooling all scores in a category. Added consistency to CSV export.
-- [x] **Question Scorable Toggle** (`/protected/admin/evaluation` → Application/Interview tabs): Added `is_scorable` column on `application_questions` (migration `21_add_question_is_scorable.sql`). Questions can be toggled as scorable or info-only via a Switch in the question manager. Non-scorable questions are completely hidden from voters during application and interview voting.
-- [x] **Legacy Import Question Mapping**: Updated the legacy CSV importer to show a dropdown of existing questions/traits when mapping score columns, instead of always creating new ones from CSV headers. Prevents duplicate questions when imported data uses simplified column names (e.g., "Q1" vs full question text). Server action accepts explicit question ID overrides.
-- [x] **Admin Tab Restructuring**: Moved scoring weights from Settings into the Results page as a "Scoring Config" tab. Created a new top-level "Evaluation" admin tab (`/protected/admin/evaluation`) combining character traits, application questions, and interview questions in a single 3-tab layout. These are all per-cohort configs. Settings page now only contains Board Positions (which are global). Updated sidebar with new "Evaluation" link.
-- [x] **Dev Script Auto-Clean**: Updated `npm run dev` script to automatically clear stale `.next` cache before starting Turbopack, preventing build manifest errors after route changes.
-- [x] **Sortable Results Table**: Renamed results table column headers from abbreviated ("App Avg", "Int Avg", "Char Avg") to full names ("Application", "Interview", "Character"). Made all column headers clickable for sorting — click cycles through descending → ascending → reset. Added sortable columns for candidate name (alphabetical) and candidate number. Top-N highlighting only applies when viewing default rank order. Sorting is memoized with `useMemo` for performance.
-- [x] **Per-Trait Character Weights**: Added `weight` column to `character_traits` table (migration `22_add_trait_weights.sql`). New `saveTraitWeights` server action. WeightsForm displays a "Character Trait Weights" card inline with Category Weights and Analytics Settings in a 3-column grid. Trait weights must sum to the Character category weight. Scoring engine uses per-trait weighted averages for computing composite score when weights are configured; falls back to flat average otherwise.
-- [x] **Outlier Toggle on Results Table**: Added a toggle button to the results table toolbar to switch between outlier-filtered averages (default) and raw averages. When outliers are included, the Consistency column is hidden. Affects all score columns.
-- [x] **Trait Creation Bug Fix**: Fixed `trait-manager.tsx` so adding a character trait no longer causes a full page reload. `createTrait` server action now returns the created trait data, and the component updates state client-side, keeping the user on the Character Traits tab.
-- [x] **Candidate Detail Styling**: Improved the candidate detail page (`/protected/admin/candidates/[id]`) so questions are visually distinct from answers — questions now have a colored left border accent, uppercase label styling, and wider tracking.
-- [x] **Import Page Auth Fix**: Fixed the Legacy CSV Importer not showing existing questions/traits in the mapping dropdown. The import page was using `createClient()` instead of `createAdminClient()`, causing RLS to block the query. Added admin auth guard.
-- [x] **Legacy Import Direct Question Mapping**: Reworked the CSV column mapping dropdown to show individual active questions/traits directly as selectable options (optgroup), eliminating the two-step mapping. Users can now pick specific questions in one click.
-- [x] **Question Rename Visibility**: Made the edit (pencil) button always visible on each question row in the Evaluation question manager, instead of hidden behind hover. Delete button remains hover-only for safety.
-- [x] **Legacy Import COI Column Mapping**: Added "Conflict of Interest (Yes/No)" as a mappable column type in the legacy CSV importer. When the COI column value is "Yes", the voter's rating record is created (counts as voted) but all trait scores are skipped (doesn't affect candidate averages). Column headers containing "conflict of interest" or "coi" auto-map to this field. COI count is displayed in the import success message.
-
+- [x] **Fix Cohort Creation Bug**: Switched `createCohort`, `updateCohort`, `deleteCohort` from `createClient()` to `createAdminClient()` to bypass RLS policies that blocked mutations.
+- [x] **Composite Score out of 100**: Scaled the composite score from 1–10 to 0–100 for easier interpretation.
+- [x] **Score Color Mini-Bars**: Added red→yellow→green mini progress bars under each score cell in the Results table, reflecting relative per-column performance.
+- [x] **Cohort School-Year Ordering**: Cohorts page now sorts in academic year order (Fall before Spring of next year) instead of alphabetical.
+- [x] **Board Member Auto-Refresh**: Board member list now auto-updates after adding or removing a member (added `router.refresh()` and `useEffect` sync).
+- [ ] Loading states and skeleton screens
 ---
 
 ## 📜 Phase 7: Legacy Historical Data Import (Completed)

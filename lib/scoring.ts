@@ -248,7 +248,7 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
       interview: intData,
       character: charData,
       characterTraits: perTraitScores,
-      composite_score: composite ? Number(composite.toFixed(2)) : null,
+      composite_score: composite !== null ? Number((composite * 10).toFixed(2)) : null,
     };
   });
 

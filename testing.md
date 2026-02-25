@@ -225,3 +225,36 @@ When importing historical character voting data, admins can map a "Conflict of I
 8. **Import:** Complete the import. The success message should show how many were "marked as Conflict of Interest" (e.g., "Imported 45 ratings with 3 questions each. (5 marked as Conflict of Interest)").
 9. **Verify Results:** Go to **Results** and click into any candidate who had COI voters. The COI voter's scores should NOT appear in the averages. The voter should still count as having voted (visible in the voter breakdown with 0 scores).
 10. **Re-import:** Upload the same CSV again. Verify no duplicate ratings are created and COI rows remain score-free.
+
+## 19. Test Composite Score Scaling (Feature)
+The composite score is now displayed on a 0–100 scale instead of 1–10.
+
+1. As an admin, go to **Results**.
+2. The **Composite** column should display scores out of 100 (e.g., 72.45 instead of 7.24).
+3. Individual category columns (Application, Interview, Character) should still be on the 1–10 scale.
+4. **Export CSV:** Verify the exported CSV also reflects the 0–100 composite score.
+
+## 20. Test Score Color Mini-Bars (Feature)
+Each score cell in the results table now shows a colored mini progress bar indicating relative performance within that column.
+
+1. As an admin, go to **Results**.
+2. Under each score value (Application, Interview, Character, and individual traits), a tiny colored bar should appear.
+3. The bar **width** represents relative position (short = lowest in column, full = highest).
+4. The bar **color** goes red → yellow → green (lowest → mid → highest).
+5. Composite score cells should NOT have a color bar.
+6. Toggle outliers on/off — the bars should recalculate based on the new averages.
+
+## 21. Test Cohort School-Year Ordering (Feature)
+The cohorts page now sorts in academic year order instead of alphabetical.
+
+1. As an admin, go to **Cohorts**.
+2. Cohorts should be ordered newest first in school-year sequence: Spring 26, Fall 25, Spring 25, Fall 24, etc.
+3. Fall of year Y should appear before Spring of year Y+1 (they belong to the same academic year).
+
+## 22. Test Board Member Auto-Refresh (Bug Fix)
+Adding or removing a board member now automatically updates the list without requiring a page reload.
+
+1. As an admin, go to **Board Members**.
+2. Click **Add Member**, select a user and position, and click **Add Member**.
+3. The new member should appear in the list **immediately** without a manual page reload.
+4. Click the trash icon to remove a member. The member should disappear from the list **immediately**.
