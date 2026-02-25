@@ -13,6 +13,7 @@ type MappingTarget =
   | "first_name"
   | "last_name"
   | "full_name"
+  | "coi"
   | "question";
 
 interface ColumnMapping {
@@ -34,6 +35,7 @@ const BASE_TARGET_OPTIONS: { value: MappingTarget; label: string }[] = [
   { value: "first_name", label: "Candidate First Name" },
   { value: "last_name", label: "Candidate Last Name" },
   { value: "full_name", label: "Candidate Full Name" },
+  { value: "coi", label: "Conflict of Interest (Yes/No)" },
   { value: "question", label: "Score (create new question)" },
 ];
 
@@ -48,6 +50,7 @@ function guessMapping(header: string): MappingTarget {
   if (h.includes("candidate") || h === "full name" || h === "candidate name")
     return "full_name";
   if (h === "timestamp" || h === "date") return "skip";
+  if (h === "coi" || h.includes("conflict of interest") || h.includes("conflict")) return "coi";
   
   return "question";
 }
@@ -131,6 +134,7 @@ export function LegacyCsvImporter({ cohortId, cohortLabel, existingQuestions, ex
         fnIdx: mappings.findIndex((m) => m.target === "first_name"),
         lnIdx: mappings.findIndex((m) => m.target === "last_name"),
         fullIdx: mappings.findIndex((m) => m.target === "full_name"),
+        coiIdx: mappings.findIndex((m) => m.target === "coi"),
       };
 
       const questionCols = mappings
@@ -139,9 +143,10 @@ export function LegacyCsvImporter({ cohortId, cohortLabel, existingQuestions, ex
 
       const res = await importLegacyRatings(cohortId, questionCols, rows, columnIndices, ratingType);
 
+      const coiNote = res.coiCount > 0 ? ` (${res.coiCount} marked as Conflict of Interest)` : "";
       setResult({
         success: true,
-        message: `Imported ${res.imported} ratings with ${res.questions} questions each.`,
+        message: `Imported ${res.imported} ratings with ${res.questions} questions each.${coiNote}`,
       });
       setStep("done");
     } catch (err: unknown) {

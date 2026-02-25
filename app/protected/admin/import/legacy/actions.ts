@@ -4,6 +4,12 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
 import { revalidatePath } from "next/cache";
 
+// Check if a COI column value indicates conflict of interest
+function isCOIYes(value: string): boolean {
+  const v = value.trim().toLowerCase();
+  return ["yes", "y", "true", "1", "coi", "conflict", "conflict of interest"].includes(v);
+}
+
 export async function importLegacyRatings(
   cohortId: string,
   questionHeaders: { header: string; colIndex: number; questionId?: string }[],
@@ -13,6 +19,7 @@ export async function importLegacyRatings(
     fnIdx: number;
     lnIdx: number;
     fullIdx: number;
+    coiIdx: number;
   },
   ratingType: "application" | "interview" | "character" = "application"
 ) {
@@ -94,6 +101,7 @@ export async function importLegacyRatings(
   };
 
   let imported = 0;
+  let coiCount = 0;
 
   for (let ri = 0; ri < rows.length; ri++) {
     const row = rows[ri];
@@ -172,38 +180,46 @@ export async function importLegacyRatings(
         ratingId = newRating.id;
       }
 
-      // 4. Insert corresponding rating_scores
+      // 4. Check if this row is marked as Conflict of Interest
+      const isCOI = columnIndices.coiIdx >= 0 && isCOIYes(row[columnIndices.coiIdx] ?? "");
+
+      // 5. Insert corresponding rating_scores (skip if COI)
       const scoresToInsert = [];
-      for (const q of questionHeaders) {
-        if (!questionIds[q.colIndex]) continue;
-        const scoreStr = (row[q.colIndex] ?? "").trim();
-        const scoreVal = parseFloat(scoreStr);
-        
-        if (!isNaN(scoreVal) && scoreVal >= 1 && scoreVal <= 10) {
-          scoresToInsert.push({
-            rating_id: ratingId,
-            ...(ratingType === "character" 
-              ? { trait_id: questionIds[q.colIndex] } 
-              : { question_id: questionIds[q.colIndex] }
-            ),
-            score: scoreVal
-          });
+      if (!isCOI) {
+        for (const q of questionHeaders) {
+          if (!questionIds[q.colIndex]) continue;
+          const scoreStr = (row[q.colIndex] ?? "").trim();
+          const scoreVal = parseFloat(scoreStr);
+          
+          if (!isNaN(scoreVal) && scoreVal >= 1 && scoreVal <= 10) {
+            scoresToInsert.push({
+              rating_id: ratingId,
+              ...(ratingType === "character" 
+                ? { trait_id: questionIds[q.colIndex] } 
+                : { question_id: questionIds[q.colIndex] }
+              ),
+              score: scoreVal
+            });
+          }
         }
       }
 
+      // Always clear existing scores for this rating (handles re-imports and COI overrides)
+      await supabase.from("rating_scores").delete().eq("rating_id", ratingId);
+
       if (scoresToInsert.length > 0) {
-        // We do an upsert or let it fail if unique, though rating_scores doesn't have a unique constraint on rating_id + question_id natively
-        // To be safe we could delete existing ones first, or assume it's a fresh import. Let's do a fast fresh insert.
-        // Wait, it might duplicate if the admin runs it twice. Let's delete existing scores for this rating_id first.
-        await supabase.from("rating_scores").delete().eq("rating_id", ratingId);
-        
         const { error: respErr } = await supabase.from("rating_scores").insert(scoresToInsert);
         if (respErr) throw new Error(`Failed to insert scores for row ${ri + 1}: ${respErr.message}`);
+      }
+      
+      // Track COI rows
+      if (isCOI) {
+        coiCount++;
       }
     }
     imported++;
   }
 
   revalidatePath("/protected/admin/results");
-  return { success: true, imported, questions: questionHeaders.length };
+  return { success: true, imported, questions: questionHeaders.length, coiCount };
 }

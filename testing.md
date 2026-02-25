@@ -211,3 +211,17 @@ Admins can rename application and interview questions directly in the Evaluation
 5. Type a new name and click the **green checkmark** to save.
 6. The question should update immediately without a page reload.
 7. Click the **X** to cancel an edit — the original name should remain.
+
+## 18. Test Legacy Import COI Column Mapping (Feature)
+When importing historical character voting data, admins can map a "Conflict of Interest" column to control whether scores are recorded.
+
+1. As an admin, go to **Import Candidates**.
+2. Scroll to **Historical Voting Data** section. Select **Character Phase**.
+3. Upload a legacy CSV that includes a "Conflict of Interest" or "COI" column with Yes/No values alongside trait score columns.
+4. On the mapping screen, the COI column should **auto-detect** and map to **"Conflict of Interest (Yes/No)"**.
+5. If not auto-detected, manually select "Conflict of Interest (Yes/No)" from the dropdown for the COI column.
+6. Map the remaining trait columns to their corresponding character traits.
+7. **Preview:** Click "Preview Import". Verify the row count is correct.
+8. **Import:** Complete the import. The success message should show how many were "marked as Conflict of Interest" (e.g., "Imported 45 ratings with 3 questions each. (5 marked as Conflict of Interest)").
+9. **Verify Results:** Go to **Results** and click into any candidate who had COI voters. The COI voter's scores should NOT appear in the averages. The voter should still count as having voted (visible in the voter breakdown with 0 scores).
+10. **Re-import:** Upload the same CSV again. Verify no duplicate ratings are created and COI rows remain score-free.

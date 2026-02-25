@@ -396,6 +396,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] **Import Page Auth Fix**: Fixed the Legacy CSV Importer not showing existing questions/traits in the mapping dropdown. The import page was using `createClient()` instead of `createAdminClient()`, causing RLS to block the query. Added admin auth guard.
 - [x] **Legacy Import Direct Question Mapping**: Reworked the CSV column mapping dropdown to show individual active questions/traits directly as selectable options (optgroup), eliminating the two-step mapping. Users can now pick specific questions in one click.
 - [x] **Question Rename Visibility**: Made the edit (pencil) button always visible on each question row in the Evaluation question manager, instead of hidden behind hover. Delete button remains hover-only for safety.
+- [x] **Legacy Import COI Column Mapping**: Added "Conflict of Interest (Yes/No)" as a mappable column type in the legacy CSV importer. When the COI column value is "Yes", the voter's rating record is created (counts as voted) but all trait scores are skipped (doesn't affect candidate averages). Column headers containing "conflict of interest" or "coi" auto-map to this field. COI count is displayed in the import success message.
 
 ---
 
