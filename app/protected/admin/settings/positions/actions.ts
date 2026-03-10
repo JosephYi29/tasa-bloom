@@ -40,3 +40,21 @@ export async function togglePosition(id: string, isActive: boolean) {
   revalidatePath("/protected/admin/board");
   return { success: true };
 }
+
+export async function togglePositionAdmin(id: string, isAdmin: boolean) {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) throw new Error("Unauthorized");
+
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase
+    .from("board_positions")
+    .update({ is_admin: isAdmin })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/protected/admin/settings/positions");
+  revalidatePath("/protected/admin/board");
+  return { success: true };
+}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Loader2 } from "lucide-react";
-import { createPosition, togglePosition } from "./actions";
+import { createPosition, togglePosition, togglePositionAdmin } from "./actions";
 
 type Position = {
   id: string;
@@ -19,6 +19,7 @@ export function PositionManager({ initialPositions }: { initialPositions: Positi
   const [newName, setNewName] = useState("");
   const [loading, setLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [togglingAdminId, setTogglingAdminId] = useState<string | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +51,52 @@ export function PositionManager({ initialPositions }: { initialPositions: Positi
     }
   };
 
+  const handleToggleAdmin = async (id: string, currentAdmin: boolean) => {
+    setTogglingAdminId(id);
+    try {
+      await togglePositionAdmin(id, !currentAdmin);
+      setPositions(positions.map(p => p.id === id ? { ...p, is_admin: !currentAdmin } : p));
+    } catch (error) {
+      console.error(error);
+      alert("Failed to toggle admin status.");
+    } finally {
+      setTogglingAdminId(null);
+    }
+  };
+
   const activePositions = positions.filter(p => p.is_active);
   const inactivePositions = positions.filter(p => !p.is_active);
+
+  const renderPositionRow = (pos: Position) => (
+    <div key={pos.id} className="flex items-center gap-3 p-4 hover:bg-muted/10 transition-colors">
+      <div className="flex-1 flex items-center gap-2">
+        <span className={`font-medium ${!pos.is_active ? "text-muted-foreground" : ""}`}>{pos.name}</span>
+        {pos.is_admin && (
+          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+            Admin
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Admin</span>
+          <Switch
+            checked={pos.is_admin}
+            onCheckedChange={() => handleToggleAdmin(pos.id, pos.is_admin)}
+            disabled={togglingAdminId === pos.id}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{pos.is_active ? "Active" : "Inactive"}</span>
+          <Switch
+            checked={pos.is_active}
+            onCheckedChange={() => handleToggle(pos.id, pos.is_active)}
+            disabled={togglingId === pos.id}
+          />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -67,26 +112,7 @@ export function PositionManager({ initialPositions }: { initialPositions: Positi
               No active positions.
             </div>
           ) : (
-            activePositions.map((pos) => (
-              <div key={pos.id} className="flex items-center gap-3 p-4 hover:bg-muted/10 transition-colors">
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="font-medium">{pos.name}</span>
-                  {pos.is_admin && (
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
-                      Admin
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Active</span>
-                  <Switch
-                    checked={pos.is_active}
-                    onCheckedChange={() => handleToggle(pos.id, pos.is_active)}
-                    disabled={togglingId === pos.id}
-                  />
-                </div>
-              </div>
-            ))
+            activePositions.map(renderPositionRow)
           )}
         </div>
 
@@ -115,26 +141,7 @@ export function PositionManager({ initialPositions }: { initialPositions: Positi
           </div>
 
           <div className="divide-y">
-            {inactivePositions.map((pos) => (
-              <div key={pos.id} className="flex items-center gap-3 p-4 hover:bg-muted/10 transition-colors">
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="font-medium text-muted-foreground">{pos.name}</span>
-                  {pos.is_admin && (
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
-                      Admin
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Inactive</span>
-                  <Switch
-                    checked={pos.is_active}
-                    onCheckedChange={() => handleToggle(pos.id, pos.is_active)}
-                    disabled={togglingId === pos.id}
-                  />
-                </div>
-              </div>
-            ))}
+            {inactivePositions.map(renderPositionRow)}
           </div>
         </div>
       )}

@@ -258,3 +258,15 @@ Adding or removing a board member now automatically updates the list without req
 2. Click **Add Member**, select a user and position, and click **Add Member**.
 3. The new member should appear in the list **immediately** without a manual page reload.
 4. Click the trash icon to remove a member. The member should disappear from the list **immediately**.
+
+## 23. Test Board Position Admin Toggle (Feature)
+Admins can toggle which board positions grant admin access directly from the Board Positions settings page.
+
+1. As an admin, go to **Settings** → **Board Positions**.
+2. Each position row should now show **two toggle switches**: one labeled **Admin** and one labeled **Active**.
+3. **Verify Advisor:** The newly added **Advisor** position should appear as active with the Admin badge and the Admin toggle on.
+4. **Grant Admin:** Find a non-admin position (e.g., "Treasurer"). Flip the **Admin** toggle on. The "Admin" badge should appear next to the name.
+5. **Revoke Admin:** Flip the Admin toggle off on any admin position. The badge should disappear.
+6. **Persistence:** Reload the page. Verify that admin toggle changes persisted.
+7. **Functional Check:** Assign a board member the position you just toggled. Verify their admin access matches the current `is_admin` state of that position.
+
