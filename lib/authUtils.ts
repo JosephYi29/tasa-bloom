@@ -1,6 +1,6 @@
 // src/lib/utils.ts
 
-import { CurrentUser, UserData } from "@/types/app";
+import { BoardPosition, CurrentUser } from "@/types/app";
 import { createClient } from "@/lib/supabase/server";
 
 const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL ?? "";
@@ -44,20 +44,15 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 		};
 	}
 
-	// Fetch the user's profile and board position for the active cohort
-	const { data: userData } = await supabase
+	// Fetch the user's board position for the active cohort
+	const { data: membershipData } = await supabase
 		.from("board_memberships")
-		.select(
-			`
-      board_positions(name, is_admin),
-      profiles(first_name, last_name)
-    `
-		)
+		.select(`board_positions(name, is_admin)`)
 		.eq("user_id", user.id)
 		.eq("cohort_id", activeCohort.id)
 		.single();
 
-	if (!userData) {
+	if (!membershipData) {
 		return {
 			id: user.id,
 			email: user.email!,
@@ -67,11 +62,18 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 		};
 	}
 
-	const { board_positions, profiles } = userData as unknown as UserData;
+	// Fetch the user's profile separately (profiles is linked via user_id, not via board_memberships)
+	const { data: profileData } = await supabase
+		.from("profiles")
+		.select("first_name, last_name")
+		.eq("user_id", user.id)
+		.single();
+
+	const board_positions = (membershipData as unknown as { board_positions: BoardPosition | null }).board_positions;
 
 	const position = board_positions?.name || null;
-	const fullName = profiles
-		? `${profiles.first_name} ${profiles.last_name}`
+	const fullName = profileData
+		? `${profileData.first_name} ${profileData.last_name}`
 		: user.email;
 	const isAdmin = board_positions?.is_admin || false;
 

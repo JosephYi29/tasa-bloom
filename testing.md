@@ -270,3 +270,11 @@ Admins can toggle which board positions grant admin access directly from the Boa
 6. **Persistence:** Reload the page. Verify that admin toggle changes persisted.
 7. **Functional Check:** Assign a board member the position you just toggled. Verify their admin access matches the current `is_admin` state of that position.
 
+## 24. Test Admin Check Bug Fix (Bug Fix)
+Board members assigned to admin-flagged positions now correctly receive admin access. Previously, the `getCurrentUser` query joined `profiles` through `board_memberships` without a direct foreign key, causing the entire query to fail silently and always returning `isAdmin: false`.
+
+1. As an admin (Super Admin), go to **Settings** → **Board Positions**.
+2. Ensure at least one position has the **Admin** toggle on (e.g., "President" or "Advisor").
+3. Go to **Board Members** and add a test user with an admin-flagged position.
+4. **Log in as the test user.** The sidebar should display the **Admin** section with links to Overview, Candidates, Import, Results, etc.
+5. Navigate to `/protected/admin`. You should see the admin overview page, **not** a redirect to `/protected`.
