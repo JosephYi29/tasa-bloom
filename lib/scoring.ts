@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { defaultWeights } from "@/lib/constants"; // fallback
+import { cache } from "react";
 
 export type CandidateScoreCategory = {
   average: number | null;
@@ -42,7 +43,7 @@ function mean(array: number[]) {
   return array.reduce((a, b) => a + b) / array.length;
 }
 
-export async function computeScoresForCohort(supabase: SupabaseClient, cohortId: string) {
+export const computeScoresForCohort = cache(async (supabase: SupabaseClient, cohortId: string) => {
   // Fetch all data in parallel — these 4 queries are independent
   const [
     { data: candidates, error: candError },
@@ -261,4 +262,4 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
   });
 
   return results;
-}
+});
