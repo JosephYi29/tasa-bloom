@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/server";
-import { getCurrentUser } from "@/lib/authUtils";
+import { getCurrentUser, getActiveCohort } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import { BoardList } from "./board-list";
 
@@ -8,17 +8,11 @@ export const metadata = {
 };
 
 export default async function AdminBoardPage() {
-  const user = await getCurrentUser();
+  const [user, activeCohort] = await Promise.all([
+    getCurrentUser(),
+    getActiveCohort(),
+  ]);
   if (!user?.isAdmin) redirect("/protected");
-
-  const supabase = await createAdminClient();
-
-  // Get active cohort
-  const { data: activeCohort } = await supabase
-    .from("cohorts")
-    .select("*")
-    .eq("is_active", true)
-    .single();
 
   if (!activeCohort) {
     return (
@@ -28,22 +22,32 @@ export default async function AdminBoardPage() {
     );
   }
 
-  // Get all members for this cohort
-  const { data: memberships } = await supabase
-    .from("board_memberships")
-    .select(`
-      user_id,
-      position_id,
-      is_available,
-      board_positions ( id, name, is_admin )
-    `)
-    .eq("cohort_id", activeCohort.id);
+  const supabase = await createAdminClient();
 
-  // We have the user_ids, but need their profile info 
-  // (First Name, Last Name). Since we can't join auth.users easily without a view,
-  // we join our public.profiles table.
+  // Fetch memberships, positions, and all profiles in parallel
+  const [{ data: memberships }, { data: positions }, { data: allProfiles }] = await Promise.all([
+    supabase
+      .from("board_memberships")
+      .select(`
+        user_id,
+        position_id,
+        is_available,
+        board_positions ( id, name, is_admin )
+      `)
+      .eq("cohort_id", activeCohort.id),
+    supabase
+      .from("board_positions")
+      .select("*")
+      .eq("is_active", true)
+      .order("name"),
+    supabase
+      .from("profiles")
+      .select("id, first_name, last_name, user_id"),
+  ]);
+
   const userIds = memberships?.map((m) => m.user_id) || [];
-  
+
+  // Fetch profiles for board member names
   const { data: profiles } = await supabase
     .from("profiles")
     .select("user_id, first_name, last_name")
@@ -61,18 +65,6 @@ export default async function AdminBoardPage() {
     };
   }) || [];
 
-  // Get only ACTIVE positions for the assignment dropdown
-  const { data: positions } = await supabase
-    .from("board_positions")
-    .select("*")
-    .eq("is_active", true)
-    .order("name");
-
-  // Get all registered profiles that ARE NOT in this cohort yet for the invite dropdown
-  const { data: allProfiles } = await supabase
-    .from("profiles")
-    .select("id, first_name, last_name, user_id");
-    
   // Filter out users already on the board
   const availableProfiles = allProfiles
     ?.filter(p => !userIds.includes(p.user_id))

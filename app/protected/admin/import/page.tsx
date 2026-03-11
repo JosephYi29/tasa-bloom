@@ -1,26 +1,22 @@
 import { CsvImporter } from "@/components/csv-importer";
 import { LegacyCsvImporter } from "@/components/legacy-csv-importer";
 import { createAdminClient } from "@/lib/supabase/server";
-import { getCurrentUser } from "@/lib/authUtils";
+import { getCurrentUser, getActiveCohort } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 
 export default async function ImportPage() {
-  const user = await getCurrentUser();
+  const [user, activeCohort] = await Promise.all([
+    getCurrentUser(),
+    getActiveCohort(),
+  ]);
   if (!user?.isAdmin) redirect("/protected");
-
-  const supabase = await createAdminClient();
-
-  const { data: activeCohort } = await supabase
-    .from("cohorts")
-    .select("id, term, year")
-    .eq("is_active", true)
-    .single();
 
   // Fetch existing questions and traits for the active cohort (for legacy import mapping)
   let existingQuestions: { id: string; text: string; category: string }[] = [];
   let existingTraits: { id: string; text: string }[] = [];
 
   if (activeCohort) {
+    const supabase = await createAdminClient();
     const [{ data: questions }, { data: traits }] = await Promise.all([
       supabase
         .from("application_questions")

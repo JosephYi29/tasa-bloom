@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/server";
-import { getCurrentUser } from "@/lib/authUtils";
+import { getCurrentUser, getActiveCohort } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import { CandidatesClient } from "./client-page";
 
@@ -8,16 +8,11 @@ export const metadata = {
 };
 
 export default async function CandidatesPage() {
-  const user = await getCurrentUser();
+  const [user, activeCohort] = await Promise.all([
+    getCurrentUser(),
+    getActiveCohort(),
+  ]);
   if (!user?.isAdmin) redirect("/protected");
-
-  const supabase = await createAdminClient();
-
-  const { data: activeCohort } = await supabase
-    .from("cohorts")
-    .select("id, term, year")
-    .eq("is_active", true)
-    .single();
 
   let candidates: {
     id: string;
@@ -31,6 +26,7 @@ export default async function CandidatesPage() {
   }[] = [];
 
   if (activeCohort) {
+    const supabase = await createAdminClient();
     const { data } = await supabase
       .from("candidates")
       .select("id, candidate_number, first_name, last_name, email, year, custom_order, is_active")

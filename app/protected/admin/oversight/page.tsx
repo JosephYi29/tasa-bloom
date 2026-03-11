@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUser } from "@/lib/authUtils";
+import { getCurrentUser, getActiveCohort } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 
@@ -8,17 +8,11 @@ export const metadata = {
 };
 
 export default async function AdminOversightPage() {
-  const user = await getCurrentUser();
+  const [user, activeCohort] = await Promise.all([
+    getCurrentUser(),
+    getActiveCohort(),
+  ]);
   if (!user?.isAdmin) redirect("/protected");
-
-  const supabase = await createClient();
-
-  // 1. Get Active Cohort
-  const { data: activeCohort } = await supabase
-    .from("cohorts")
-    .select("id, term, year")
-    .eq("is_active", true)
-    .single();
 
   if (!activeCohort) {
     return (
@@ -28,41 +22,38 @@ export default async function AdminOversightPage() {
     );
   }
 
-  // 2. Total Candidate Count in this Cohort
-  const { count: candidateCount } = await supabase
-    .from("candidates")
-    .select("*", { count: "exact", head: true })
-    .eq("cohort_id", activeCohort.id)
-    .eq("is_active", true);
+  const supabase = await createClient();
+
+  // Fetch candidate count, board members, and ratings in parallel
+  const [{ count: candidateCount }, { data: boardMembers }, { data: ratings }] = await Promise.all([
+    supabase
+      .from("candidates")
+      .select("*", { count: "exact", head: true })
+      .eq("cohort_id", activeCohort.id)
+      .eq("is_active", true),
+    supabase
+      .from("board_memberships")
+      .select(`
+        user_id,
+        is_available,
+        board_positions ( name )
+      `)
+      .eq("cohort_id", activeCohort.id)
+      .eq("is_available", true),
+    supabase
+      .from("ratings")
+      .select("voter_id, rating_type, candidate_id")
+      .eq("cohort_id", activeCohort.id),
+  ]);
 
   const totalCandidates = candidateCount || 0;
-
-  // 3. Get all available board members for active cohort (exclude unavailable)
-  const { data: boardMembers } = await supabase
-    .from("board_memberships")
-    .select(`
-      user_id,
-      is_available,
-      board_positions ( name )
-    `)
-    .eq("cohort_id", activeCohort.id)
-    .eq("is_available", true);
-
   const userIds = boardMembers?.map((m) => m.user_id) || [];
 
-  // 4. Get Profiles for names
+  // Fetch profiles for names
   const { data: profiles } = await supabase
     .from("profiles")
     .select("user_id, first_name, last_name")
     .in("user_id", userIds);
-
-  // 5. Get Ratings (counts)
-  // We need to know how many DISTINCT candidates each user has rated per category
-  // A rating record represents 1 candidate being rated by 1 user in 1 category
-  const { data: ratings } = await supabase
-    .from("ratings")
-    .select("voter_id, rating_type, candidate_id")
-    .eq("cohort_id", activeCohort.id);
 
   const progressData = boardMembers?.map((member) => {
     const profile = profiles?.find((p) => p.user_id === member.user_id);

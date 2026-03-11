@@ -33,18 +33,18 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
     );
   }
 
-  // Fetch application questions & responses
-  const { data: responses } = await supabase
-    .from("application_responses")
-    .select("*, question:application_questions(question_text, question_order, category)")
-    .eq("candidate_id", id)
-    .order("question_id");
-
-  // Fetch interview links
-  const { data: interviewLinks } = await supabase
-    .from("interview_links")
-    .select("*")
-    .eq("candidate_id", id);
+  // Fetch application questions & responses + interview links in parallel
+  const [{ data: responses }, { data: interviewLinks }] = await Promise.all([
+    supabase
+      .from("application_responses")
+      .select("*, question:application_questions(question_text, question_order, category)")
+      .eq("candidate_id", id)
+      .order("question_id"),
+    supabase
+      .from("interview_links")
+      .select("*")
+      .eq("candidate_id", id),
+  ]);
 
   const cohort = candidate.cohort as { term?: string; year?: number } | null;
   const videoUrl = interviewLinks?.[0]?.video_url || null;

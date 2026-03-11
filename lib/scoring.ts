@@ -43,22 +43,45 @@ function mean(array: number[]) {
 }
 
 export async function computeScoresForCohort(supabase: SupabaseClient, cohortId: string) {
-  // 1. Fetch Candidates
-  const { data: candidates, error: candError } = await supabase
-    .from("candidates")
-    .select("id, first_name, last_name, candidate_number, email")
-    .eq("cohort_id", cohortId)
-    .eq("is_active", true);
+  // Fetch all data in parallel — these 4 queries are independent
+  const [
+    { data: candidates, error: candError },
+    { data: dbSettings },
+    { data: characterTraits, error: traitError },
+    { data: rawRatings, error: ratError },
+  ] = await Promise.all([
+    supabase
+      .from("candidates")
+      .select("id, first_name, last_name, candidate_number, email")
+      .eq("cohort_id", cohortId)
+      .eq("is_active", true),
+    supabase
+      .from("cohort_settings")
+      .select("*")
+      .eq("cohort_id", cohortId)
+      .single(),
+    supabase
+      .from("character_traits")
+      .select("id, trait_name, trait_order, weight")
+      .eq("cohort_id", cohortId)
+      .order("trait_order", { ascending: true }),
+    supabase
+      .from("ratings")
+      .select(`
+        id,
+        candidate_id,
+        rating_type,
+        voter_id,
+        rating_scores (score, question_id, trait_id)
+      `)
+      .eq("cohort_id", cohortId),
+  ]);
 
   if (candError) throw candError;
+  if (traitError) throw traitError;
+  if (ratError) throw ratError;
 
   let settings = Object.assign({}, defaultWeights);
-  const { data: dbSettings } = await supabase
-    .from("cohort_settings")
-    .select("*")
-    .eq("cohort_id", cohortId)
-    .single();
-
   if (dbSettings) {
     settings = {
       outlier_std_devs: dbSettings.outlier_std_devs ?? defaultWeights.outlier_std_devs,
@@ -68,29 +91,6 @@ export async function computeScoresForCohort(supabase: SupabaseClient, cohortId:
       top_n_display: dbSettings.top_n_display ?? defaultWeights.top_n_display
     };
   }
-
-  // 3. Fetch character traits for this cohort
-  const { data: characterTraits, error: traitError } = await supabase
-    .from("character_traits")
-    .select("id, trait_name, trait_order, weight")
-    .eq("cohort_id", cohortId)
-    .order("trait_order", { ascending: true });
-
-  if (traitError) throw traitError;
-
-  // 4. Fetch Ratings & Scores (include question_id/trait_id for per-item outlier detection)
-  const { data: rawRatings, error: ratError } = await supabase
-    .from("ratings")
-    .select(`
-      id,
-      candidate_id,
-      rating_type,
-      voter_id,
-      rating_scores (score, question_id, trait_id)
-    `)
-    .eq("cohort_id", cohortId);
-
-  if (ratError) throw ratError;
 
   // Group scores by category per candidate, but also track per-item scores for outlier detection
   // scoreMap[candidate_id][rating_type] = all scores (flat, for average)

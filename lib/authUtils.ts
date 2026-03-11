@@ -1,11 +1,12 @@
 // src/lib/utils.ts
 
+import { cache } from "react";
 import { BoardPosition, CurrentUser } from "@/types/app";
 import { createClient } from "@/lib/supabase/server";
 
 const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL ?? "";
 
-export async function getCurrentUser(): Promise<CurrentUser> {
+export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
 	const supabase = await createClient();
 
 	const {
@@ -84,4 +85,17 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 		position,
 		isAdmin,
 	};
-}
+});
+
+/**
+ * Returns the currently active cohort. Cached per-request via React cache().
+ */
+export const getActiveCohort = cache(async (): Promise<{ id: string; term: string; year: number } | null> => {
+	const supabase = await createClient();
+	const { data } = await supabase
+		.from("cohorts")
+		.select("id, term, year")
+		.eq("is_active", true)
+		.single();
+	return data;
+});

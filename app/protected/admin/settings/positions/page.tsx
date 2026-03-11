@@ -8,10 +8,11 @@ export const metadata = {
 };
 
 export default async function PositionsSettingsPage() {
-  const user = await getCurrentUser();
+  const [user, supabase] = await Promise.all([
+    getCurrentUser(),
+    createAdminClient(),
+  ]);
   if (!user?.isAdmin) redirect("/protected");
-
-  const supabase = await createAdminClient();
 
   const { data: positions } = await supabase
     .from("board_positions")

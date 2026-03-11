@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/server";
-import { getCurrentUser } from "@/lib/authUtils";
+import { getCurrentUser, getActiveCohort } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -7,21 +7,15 @@ import { Users, Upload, Settings } from "lucide-react";
 import { BoardMemberProgress } from "./board-member-progress";
 
 export default async function AdminOverviewPage() {
-  const user = await getCurrentUser();
+  const [user, activeCohort] = await Promise.all([
+    getCurrentUser(),
+    getActiveCohort(),
+  ]);
   if (!user?.isAdmin) redirect("/protected");
 
-  const supabase = await createAdminClient();
-
-  // Get active cohort
-  const { data: activeCohort } = await supabase
-    .from("cohorts")
-    .select("id, term, year")
-    .eq("is_active", true)
-    .single();
-
-  // Get candidate count for active cohort
   let candidateCount = 0;
   if (activeCohort) {
+    const supabase = await createAdminClient();
     const { count } = await supabase
       .from("candidates")
       .select("*", { count: "exact", head: true })

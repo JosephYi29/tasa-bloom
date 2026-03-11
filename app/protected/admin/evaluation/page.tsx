@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/server";
-import { getCurrentUser } from "@/lib/authUtils";
+import { getCurrentUser, getActiveCohort } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import { EvaluationTabs } from "./evaluation-tabs";
 
@@ -8,17 +8,11 @@ export const metadata = {
 };
 
 export default async function AdminEvaluationPage() {
-  const user = await getCurrentUser();
+  const [user, activeCohort] = await Promise.all([
+    getCurrentUser(),
+    getActiveCohort(),
+  ]);
   if (!user?.isAdmin) redirect("/protected");
-
-  const supabase = await createAdminClient();
-
-  // Get active cohort
-  const { data: activeCohort } = await supabase
-    .from("cohorts")
-    .select("id, term, year")
-    .eq("is_active", true)
-    .single();
 
   if (!activeCohort) {
     return (
@@ -30,19 +24,21 @@ export default async function AdminEvaluationPage() {
     );
   }
 
-  // Fetch current traits for the active cohort
-  const { data: traits } = await supabase
-    .from("character_traits")
-    .select("*")
-    .eq("cohort_id", activeCohort.id)
-    .order("trait_order", { ascending: true });
+  const supabase = await createAdminClient();
 
-  // Fetch current questions for the active cohort
-  const { data: questions } = await supabase
-    .from("application_questions")
-    .select("*")
-    .eq("cohort_id", activeCohort.id)
-    .order("question_order", { ascending: true });
+  // Fetch traits and questions in parallel
+  const [{ data: traits }, { data: questions }] = await Promise.all([
+    supabase
+      .from("character_traits")
+      .select("*")
+      .eq("cohort_id", activeCohort.id)
+      .order("trait_order", { ascending: true }),
+    supabase
+      .from("application_questions")
+      .select("*")
+      .eq("cohort_id", activeCohort.id)
+      .order("question_order", { ascending: true }),
+  ]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

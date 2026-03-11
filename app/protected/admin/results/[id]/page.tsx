@@ -47,38 +47,38 @@ export default async function CandidateDetailsPage({ params }: { params: Promise
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     : (candidate.interview_links as any)?.video_url || "";
 
-  // 2. Fetch Settings for Outlier Threshold
-  const { data: settings } = await supabase
-    .from("cohort_settings")
-    .select("outlier_std_devs")
-    .eq("cohort_id", candidate.cohort_id)
-    .single();
+  // Fetch settings and ratings in parallel
+  const [{ data: settings }, { data: rawRatings }] = await Promise.all([
+    supabase
+      .from("cohort_settings")
+      .select("outlier_std_devs")
+      .eq("cohort_id", candidate.cohort_id)
+      .single(),
+    supabase
+      .from("ratings")
+      .select(`
+        id,
+        rating_type,
+        voter_id,
+        legacy_voter_alias,
+        imported_by,
+        rating_scores (
+          score,
+          question_id,
+          trait_id,
+          comment,
+          application_questions (
+            question_text
+          ),
+          character_traits (
+            trait_name
+          )
+        )
+      `)
+      .eq("candidate_id", candidateId),
+  ]);
 
   const stdThreshold = settings?.outlier_std_devs ?? defaultWeights.outlier_std_devs;
-
-  // 3. Fetch Ratings with Scores
-  const { data: rawRatings } = await supabase
-    .from("ratings")
-    .select(`
-      id,
-      rating_type,
-      voter_id,
-      legacy_voter_alias,
-      imported_by,
-      rating_scores (
-        score,
-        question_id,
-        trait_id,
-        comment,
-        application_questions (
-          question_text
-        ),
-        character_traits (
-          trait_name
-        )
-      )
-    `)
-    .eq("candidate_id", candidateId);
 
   // 4. Process scores per question/trait
   const scoresByItem: Record<string, { type: string, text: string, scores: number[], comments: string[] }> = {};

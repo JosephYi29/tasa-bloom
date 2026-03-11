@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/server";
-import { getCurrentUser } from "@/lib/authUtils";
+import { getCurrentUser, getActiveCohort } from "@/lib/authUtils";
 import { redirect } from "next/navigation";
 import { computeScoresForCohort } from "@/lib/scoring";
 import { ResultsTabs } from "./results-tabs";
@@ -10,17 +10,11 @@ export const metadata = {
 };
 
 export default async function AdminResultsPage() {
-  const user = await getCurrentUser();
+  const [user, activeCohort] = await Promise.all([
+    getCurrentUser(),
+    getActiveCohort(),
+  ]);
   if (!user?.isAdmin) redirect("/protected");
-
-  const supabase = await createAdminClient();
-
-  // Get active cohort
-  const { data: activeCohort } = await supabase
-    .from("cohorts")
-    .select("id, term, year")
-    .eq("is_active", true)
-    .single();
 
   if (!activeCohort) {
     return (
@@ -32,23 +26,24 @@ export default async function AdminResultsPage() {
     );
   }
 
-  // Fetch character traits for this cohort
-  const { data: traits } = await supabase
-    .from("character_traits")
-    .select("id, trait_name, trait_order, weight")
-    .eq("cohort_id", activeCohort.id)
-    .order("trait_order", { ascending: true });
+  const supabase = await createAdminClient();
 
-  // Fetch and compute scores
-  const results = await computeScoresForCohort(supabase, activeCohort.id);
+  // Fetch traits, compute scores, and get settings in parallel
+  const [{ data: traits }, results, settingsResult] = await Promise.all([
+    supabase
+      .from("character_traits")
+      .select("id, trait_name, trait_order, weight")
+      .eq("cohort_id", activeCohort.id)
+      .order("trait_order", { ascending: true }),
+    computeScoresForCohort(supabase, activeCohort.id),
+    supabase
+      .from("cohort_settings")
+      .select("*")
+      .eq("cohort_id", activeCohort.id)
+      .single(),
+  ]);
 
-  // Get settings (weights + analytics config)
-  let { data: settings } = await supabase
-    .from("cohort_settings")
-    .select("*")
-    .eq("cohort_id", activeCohort.id)
-    .single();
-
+  let settings = settingsResult.data;
   if (!settings) {
     settings = {
       id: "new",

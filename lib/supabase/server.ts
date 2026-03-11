@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 /**
@@ -40,8 +41,7 @@ export async function createClient() {
  * validated the user's permissions beforehand (e.g. they are a Super Admin).
  */
 export async function createAdminClient() {
-  const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
-  
+
   return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!,
