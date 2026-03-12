@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 
 export async function saveWeightsAction(formData: FormData) {
@@ -46,5 +46,6 @@ export async function saveWeightsAction(formData: FormData) {
   }
 
   revalidatePath("/protected/admin/results");
+  revalidateTag("cohort-scores");
   return { success: true };
 }

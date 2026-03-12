@@ -28,22 +28,10 @@ export default async function AdminResultsPage() {
 
   const supabase = await createAdminClient();
 
-  // Fetch traits, compute scores, and get settings in parallel
-  const [{ data: traits }, results, settingsResult] = await Promise.all([
-    supabase
-      .from("character_traits")
-      .select("id, trait_name, trait_order, weight")
-      .eq("cohort_id", activeCohort.id)
-      .order("trait_order", { ascending: true }),
-    computeScoresForCohort(supabase, activeCohort.id),
-    supabase
-      .from("cohort_settings")
-      .select("*")
-      .eq("cohort_id", activeCohort.id)
-      .single(),
-  ]);
+  // Fetch traits, compute scores, and get settings via cached helper
+  const { results, settings: dbSettings, traits } = await computeScoresForCohort(supabase, activeCohort.id);
 
-  let settings = settingsResult.data;
+  let settings = dbSettings;
   if (!settings) {
     settings = {
       id: "new",

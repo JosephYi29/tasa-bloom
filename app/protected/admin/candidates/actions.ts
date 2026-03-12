@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function updateCandidateOrderAction(orderedIds: string[]) {
   const user = await getCurrentUser();
@@ -37,6 +37,7 @@ export async function updateCandidateOrderAction(orderedIds: string[]) {
 
   revalidatePath("/protected/admin/candidates");
   revalidatePath("/protected/vote");
+  revalidateTag("cohort-scores");
   return { success: true };
 }
 
@@ -71,6 +72,7 @@ export async function remapCandidateNumbersAction(orderedIds: string[]) {
 
   revalidatePath("/protected/admin/candidates");
   revalidatePath("/protected/vote");
+  revalidateTag("cohort-scores");
   return { success: true };
 }
 
@@ -94,6 +96,7 @@ export async function deleteCandidateAction(candidateId: string) {
 
   revalidatePath("/protected/admin/candidates");
   revalidatePath("/protected/vote");
+  revalidateTag("cohort-scores");
   return { success: true };
 }
 
@@ -139,6 +142,7 @@ export async function updateCandidateAction(
 
   revalidatePath("/protected/admin/candidates");
   revalidatePath("/protected/vote");
+  revalidateTag("cohort-scores");
   return { success: true, candidate: { id: candidateId, ...data } };
 }
 
@@ -165,6 +169,7 @@ export async function upsertInterviewLinkAction(candidateId: string, videoUrl: s
 
   revalidatePath(`/protected/admin/results/${candidateId}`);
   revalidatePath(`/protected/vote/${candidateId}/interview`);
+  revalidateTag("cohort-scores");
   return { success: true };
 }
 
@@ -189,6 +194,7 @@ export async function toggleCandidateActiveAction(candidateId: string, isActive:
   revalidatePath("/protected/admin/candidates");
   revalidatePath("/protected/admin");
   revalidatePath("/protected/vote");
+  revalidateTag("cohort-scores");
   return { success: true };
 }
 
@@ -213,5 +219,6 @@ export async function toggleAllCandidatesActiveAction(cohortId: string, isActive
   revalidatePath("/protected/admin/candidates");
   revalidatePath("/protected/admin");
   revalidatePath("/protected/vote");
+  revalidateTag("cohort-scores");
   return { success: true };
 }

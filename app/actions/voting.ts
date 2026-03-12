@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export type RatingType = "application" | "interview" | "character";
 
@@ -87,6 +87,7 @@ export async function submitScores(
   // Revalidate the voting hub
   revalidatePath("/protected/vote");
   revalidatePath(`/protected/vote/${candidateId}/${ratingType}`);
+  revalidateTag("cohort-scores");
 
   return { success: true };
 }

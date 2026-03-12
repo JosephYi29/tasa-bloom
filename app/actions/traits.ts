@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/authUtils";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function createTrait(cohortId: string, traitName: string, traitOrder: number) {
   const user = await getCurrentUser();
@@ -25,6 +25,7 @@ export async function createTrait(cohortId: string, traitName: string, traitOrde
 
   revalidatePath("/protected/admin/evaluation");
   revalidatePath("/protected/admin/results");
+  revalidateTag("cohort-scores");
   return { success: true, trait: data };
 }
 
@@ -46,6 +47,7 @@ export async function updateTrait(id: string, traitName: string, traitOrder: num
 
   revalidatePath("/protected/admin/evaluation");
   revalidatePath("/protected/admin/results");
+  revalidateTag("cohort-scores");
   return { success: true };
 }
 
@@ -64,6 +66,7 @@ export async function deleteTrait(id: string) {
 
   revalidatePath("/protected/admin/evaluation");
   revalidatePath("/protected/admin/results");
+  revalidateTag("cohort-scores");
   return { success: true };
 }
 
@@ -83,5 +86,6 @@ export async function saveTraitWeights(traitWeights: { id: string; weight: numbe
   }
 
   revalidatePath("/protected/admin/results");
+  revalidateTag("cohort-scores");
   return { success: true };
 }

@@ -98,6 +98,7 @@ Now, let's verify the automatic scoring engine and export features.
    * **Sort by Number:** Click the **#** header to sort by candidate number.
 8. Click into any Candidate's name to view their **Candidate Details**. Look at the breakdowns for Application, Interview, and Character ratings. Notice how standard deviations inform the Adjusted Average to avoid extreme feedback outliers!
 9. Back in the Results page, hit the **Export CSV** to safely download the results locally onto your computer in the `.csv` format.
+10. **Test Caching Speed:** Refresh the Results page. The first load may take some time, but subsequent reloads should be practically instant (~400ms in dev, ~50ms in prod) thanks to global caching. Submit a new vote and refresh again to verify the cache instantly invalidates and shows the new score!
 
 ## 8. Test Candidate Ordering (Feature)
 As an admin, you have full control over how Candidates are presented to voters on the Voting Hub.

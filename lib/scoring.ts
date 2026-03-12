@@ -1,6 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { defaultWeights } from "@/lib/constants"; // fallback
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
 export type CandidateScoreCategory = {
   average: number | null;
@@ -44,7 +45,9 @@ function mean(array: number[]) {
 }
 
 export const computeScoresForCohort = cache(async (supabase: SupabaseClient, cohortId: string) => {
-  // Fetch all data in parallel — these 4 queries are independent
+  const getCachedScores = unstable_cache(
+    async () => {
+      // Fetch all data in parallel — these 4 queries are independent
   const [
     { data: candidates, error: candError },
     { data: dbSettings },
@@ -261,5 +264,11 @@ export const computeScoresForCohort = cache(async (supabase: SupabaseClient, coh
     return b.composite_score - a.composite_score;
   });
 
-  return results;
+  return { results, settings: dbSettings || null, traits: characterTraits || [] };
+    },
+    ['cohort-scores', cohortId],
+    { tags: ['cohort-scores'] }
+  );
+
+  return getCachedScores();
 });

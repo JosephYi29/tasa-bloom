@@ -405,6 +405,7 @@ CSV Headers → Map → Create/reuse `application_question` records
 - [x] **Cohort School-Year Ordering**: Cohorts page now sorts in academic year order (Fall before Spring of next year) instead of alphabetical.
 - [x] **Board Member Auto-Refresh**: Board member list now auto-updates after adding or removing a member (added `router.refresh()` and `useEffect` sync).
 - [x] **Admin Page Performance Optimization**: Utilized `React.cache()` and `Promise.all` to parallelize data fetching across 10+ admin routes, reducing page load times by >50%.
+- [x] **Global Scoring Cache**: Implemented Next.js `unstable_cache` and `revalidateTag` to cache heavy scoring computations globally, reducing Results page latency by ~81%.
 - [ ] Loading states and skeleton screens
 ---
 
